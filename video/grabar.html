@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Grabación de los modelos 3D</title>
+<style>html, body { margin: 0; background: #e9eef3; } canvas { display: block; }</style>
+</head>
+<body>
+<canvas id="comp" width="1280" height="720"></canvas>
+<script>window.errores = []; addEventListener("error", e => errores.push((e.message || "carga fallida") + " · " + (e.filename || (e.target && e.target.src) || "")), true);</script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/webm-muxer@5.0.3/build/webm-muxer.js"></script>
+<script src="../simulador/modelos3d.js"></script>
+<script>
+'use strict';
+// Guion del vídeo: cada escena dura unos segundos; la cámara y las piezas dependen solo del tiempo.
+const W = 1280, H = 720;
+const comp = document.getElementById('comp'), cx = comp.getContext('2d');
+const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+renderer.setPixelRatio(1);
+renderer.setSize(W, H, false);
+renderer.localClippingEnabled = true;
+const escena = new THREE.Scene();
+escena.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 0.95));
+const l1 = new THREE.DirectionalLight(0xffffff, 0.9); l1.position.set(220, 320, 260); escena.add(l1);
+const l2 = new THREE.DirectionalLight(0xffffff, 0.35); l2.position.set(-260, 120, -160); escena.add(l2);
+const camara = new THREE.PerspectiveCamera(28, W / H, 1, 5000);
+const plano = new THREE.Plane(new THREE.Vector3(0, 0, -1), 1000);
+const M = { v01: Modelos3D.crear(THREE, 'v01'), v02: Modelos3D.crear(THREE, 'v02') };
+Object.values(M).forEach(m => { m.materiales.forEach(mt => { mt.clippingPlanes = [plano]; }); escena.add(m.grupo); });
+
+const suave = x => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
+const tramo = (t, a, b) => suave((t - a) / (b - a));
+const TXT = {
+  v01: ['v0.1 · fijo al inodoro', 'Una ranura de 3 × 70 mm · mide volumen y caudal · 14 cm de alto'],
+  v02: ['v0.2 · portátil', '4 ranuras de 1,5 mm + acelerómetro · solo volumen, ±10 mL · 8 cm de alto'],
+};
+// [inicio, fin, tipo, modelo]
+const ESCENAS = [
+  [0, 7, 'comparar', null],
+  [7, 13, 'giro', 'v01'], [13, 19, 'despiece', 'v01'], [19, 26, 'corte', 'v01'],
+  [26, 32, 'giro', 'v02'], [32, 38, 'despiece', 'v02'], [38, 45, 'corte', 'v02'],
+];
+const DURACION = 45;
+const CAP = { comparar: 'Comparativa a la misma escala', giro: 'Vista general', despiece: 'Piezas', corte: 'Corte por el eje' };
+
+// Encuadra las piezas indicadas (sin el agua); deja sitio arriba para los rótulos
+function encuadre(objs, margen = 1.12, subir = 0.06) {
+  const caja = new THREE.Box3();
+  objs.forEach(o => caja.expandByObject(o));
+  const c = caja.getCenter(new THREE.Vector3()), s = caja.getSize(new THREE.Vector3());
+  const fov = camara.fov * Math.PI / 180;
+  const dV = s.y / 2 / Math.tan(fov / 2), dH = Math.max(s.x, s.z) / 2 / Math.tan(fov / 2) / camara.aspect;
+  c.y += s.y * subir;
+  return { c, d: Math.max(dV, dH) * margen + Math.max(s.x, s.z) / 2, suelo: caja.min.y };
+}
+const piezas = (m, nombres) => m.partes.filter(p => !nombres || nombres.includes(p.nombre)).map(p => p.obj);
+function camaraEn(c, d, az, el) {
+  const a = az * Math.PI / 180, e = el * Math.PI / 180;
+  camara.position.set(c.x + d * Math.sin(a) * Math.cos(e), c.y + d * Math.sin(e), c.z + d * Math.cos(a) * Math.cos(e));
+  camara.lookAt(c);
+}
+
+function dibujar(t) {
+  const [t0, t1, tipo, id] = ESCENAS.find(e => t >= e[0] && t < e[1]) || ESCENAS[ESCENAS.length - 1];
+  const u = (t - t0) / (t1 - t0);
+  ['v01', 'v02'].forEach(k => { M[k].grupo.position.set(0, 0, 0); M[k].grupo.rotation.y = 0; M[k].grupo.visible = tipo === 'comparar' || k === id; Modelos3D.despiece(M[k], 0, false); });
+  plano.constant = 1000;
+  let az = 0, el = 16, objs;
+  if (tipo === 'comparar') {
+    // los dos giran sobre sí mismos con la cámara quieta: así se ven a la misma escala
+    M.v01.grupo.position.x = -80; M.v02.grupo.position.x = 85;
+    M.v01.grupo.rotation.y = M.v02.grupo.rotation.y = (-30 + 120 * u) * Math.PI / 180;
+    objs = piezas(M.v01).concat(piezas(M.v02));
+    az = 0; el = 12;
+  } else {
+    const m = M[id];
+    if (tipo === 'giro') { az = 360 * u; }
+    if (tipo === 'despiece') {
+      const f = tramo(t, t0 + 0.3, t0 + 2.6) - tramo(t, t1 - 2.2, t1 - 0.2);
+      Modelos3D.despiece(m, f, false);
+      az = 30 + 40 * u; el = 18;
+    }
+    if (tipo === 'corte') {
+      Modelos3D.despiece(m, 0, true);
+      plano.constant = 90 - 90 * tramo(t, t0 + 0.4, t0 + 2.4);
+      az = 38 - 76 * u; el = 12;
+    }
+    objs = tipo === 'corte' ? piezas(m, ['Cuerpo', 'Tapa', 'Buzo']) : piezas(m);
+  }
+  escena.updateMatrixWorld(true);
+  const AJUSTE = { comparar: [1.45, 0.08], giro: [1.12, 0.06], despiece: [1.1, 0.0], corte: [1.35, 0.13] };
+  const { c, d, suelo } = encuadre(objs, ...AJUSTE[tipo]);
+  camaraEn(c, d, az, el);
+  renderer.render(escena, camara);
+
+  // fondo de estudio, render y rótulos
+  const fondo = cx.createLinearGradient(0, 0, 0, H);
+  fondo.addColorStop(0, '#f2f5f8'); fondo.addColorStop(1, '#cfd8e2');
+  cx.fillStyle = fondo; cx.fillRect(0, 0, W, H);
+  const ps = new THREE.Vector3(c.x, suelo, c.z).project(camara);
+  cx.fillStyle = 'rgba(70, 90, 115, 0.16)';
+  cx.beginPath(); cx.ellipse(W / 2, Math.min(H - 40, (1 - ps.y) / 2 * H + 6), W * 0.2, 16, 0, 0, Math.PI * 2); cx.fill();
+  cx.drawImage(renderer.domElement, 0, 0);
+
+  cx.fillStyle = '#10294a'; cx.font = '700 38px "Segoe UI", system-ui, sans-serif'; cx.textBaseline = 'alphabetic';
+  if (tipo === 'comparar') {
+    cx.fillText('Uroflujómetro · modelos 3D', 48, 70);
+    cx.font = '22px "Segoe UI", system-ui, sans-serif'; cx.fillStyle = '#3b4d63';
+    cx.fillText('Las dos versiones a la misma escala', 48, 104);
+    [['v01', 'v0.1 · fijo al inodoro'], ['v02', 'v0.2 · portátil']].forEach(([k, txt]) => {
+      const p = new THREE.Vector3(M[k].grupo.position.x, M[k].alto[0] - 18, 0).project(camara);
+      cx.font = '600 22px "Segoe UI", system-ui, sans-serif'; cx.fillStyle = '#10294a'; cx.textAlign = 'center';
+      cx.fillText(txt, (p.x + 1) / 2 * W, (1 - p.y) / 2 * H + 30);
+      cx.textAlign = 'left';
+    });
+  } else {
+    cx.fillText(TXT[id][0], 48, 70);
+    cx.font = '22px "Segoe UI", system-ui, sans-serif'; cx.fillStyle = '#3b4d63';
+    cx.fillText(TXT[id][1], 48, 104);
+  }
+  // capítulo y barra de progreso
+  cx.fillStyle = 'rgba(16, 41, 74, 0.85)';
+  const cap = CAP[tipo];
+  cx.font = '600 20px "Segoe UI", system-ui, sans-serif';
+  const wCap = cx.measureText(cap).width + 32;
+  cx.beginPath(); cx.roundRect ? cx.roundRect(48, H - 86, wCap, 38, 19) : cx.rect(48, H - 86, wCap, 38); cx.fill();
+  cx.fillStyle = '#ffffff'; cx.fillText(cap, 64, H - 60);
+  cx.fillStyle = 'rgba(16, 41, 74, 0.15)'; cx.fillRect(48, H - 30, W - 96, 6);
+  cx.fillStyle = '#2c6db3'; cx.fillRect(48, H - 30, (W - 96) * Math.min(1, t / DURACION), 6);
+  // fundido corto entre escenas
+  const fund = Math.max(0, 1 - Math.min(t - t0, t1 - t) / 0.25);
+  if (fund > 0 && t > 0.1 && t < DURACION - 0.1) { cx.fillStyle = `rgba(233, 238, 243, ${fund})`; cx.fillRect(0, 0, W, H); }
+}
+
+// Grabación en tiempo real con MediaRecorder; devuelve el vídeo en base64
+window.grabar = async function () {
+  const tipo = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'].find(m => MediaRecorder.isTypeSupported(m));
+  const rec = new MediaRecorder(comp.captureStream(30), { mimeType: tipo, videoBitsPerSecond: 3500000 });
+  const trozos = [];
+  rec.ondataavailable = e => { if (e.data.size) trozos.push(e.data); };
+  rec.start(1000);
+  const ini = performance.now();
+  let fotogramas = 0;
+  await new Promise(fin => {
+    (function paso() {
+      const t = (performance.now() - ini) / 1000;
+      if (t >= DURACION) return fin();
+      dibujar(t); fotogramas++;
+      requestAnimationFrame(paso);
+    })();
+  });
+  rec.stop();
+  await new Promise(r => { rec.onstop = r; });
+  const buf = new Uint8Array(await new Blob(trozos, { type: 'video/webm' }).arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+  return JSON.stringify({ tipo, fotogramas, fps: fotogramas / DURACION, datos: btoa(bin) });
+};
+
+// Grabación fotograma a fotograma (30 fps exactos) con WebCodecs: no depende de lo rápido que dibuje
+window.grabarFotogramas = async function () {
+  const fps = 30, total = Math.round(DURACION * fps);
+  const conf = c => ({ codec: c, width: W, height: H, bitrate: 6000000, framerate: fps });
+  let codec = 'vp09.00.10.08', mc = 'V_VP9';
+  if (!(await VideoEncoder.isConfigSupported(conf(codec))).supported) { codec = 'vp8'; mc = 'V_VP8'; }
+  const muxer = new WebMMuxer.Muxer({ target: new WebMMuxer.ArrayBufferTarget(), video: { codec: mc, width: W, height: H, frameRate: fps } });
+  let fallo = null;
+  const enc = new VideoEncoder({ output: (trozo, meta) => muxer.addVideoChunk(trozo, meta), error: e => { fallo = e; } });
+  enc.configure(conf(codec));
+  for (let i = 0; i < total; i++) {
+    dibujar(i / fps);
+    const fr = new VideoFrame(comp, { timestamp: Math.round(i * 1e6 / fps), duration: Math.round(1e6 / fps) });
+    enc.encode(fr, { keyFrame: i % (fps * 2) === 0 });
+    fr.close();
+    while (enc.encodeQueueSize > 4) await new Promise(r => setTimeout(r, 1));
+    if (fallo) throw fallo;
+  }
+  await enc.flush();
+  muxer.finalize();
+  const buf = new Uint8Array(muxer.target.buffer);
+  let bin = '';
+  for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+  return JSON.stringify({ tipo: 'video/webm;codecs=' + codec, fotogramas: total, fps, datos: btoa(bin) });
+};
+
+const q = new URLSearchParams(location.search);
+if (q.has('t')) dibujar(parseFloat(q.get('t')));
+window.listo = true;
+</script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+// Registro de versiones del diseño. Cada cambio del aparato añade una entrada nueva al final
+// (la última es la actual). El simulador lee este archivo para la línea de versiones,
+// la tabla comparativa y el visor 3D.
+window.VERSIONES = [
+  {
+    id: 'v0.1',
+    fecha: '2026-10-10',
+    nombre: 'Fijo al inodoro',
+    estado: 'Sustituida por la v0.2 para usar fuera de casa',
+    diseno: 'propuesto',      // diseño equivalente en el simulador
+    modelo: 'v01',            // modelo del visor 3D
+    resumen: 'Primera versión que funciona: la orina pasa por una cámara de Ø32 mm con una ranura de 3 × 70 mm y un sensor de presión lee el nivel. Mide volumen y caudal.',
+    porque: 'El concepto de la imagen desbordaba en 4–6 s: su sensor (SFM3000) mide gases y no pasa de 2,5 mL/s.',
+    cambios: [
+      'Vertedero en lugar de sensor en línea: el nivel en la cámara indica el caudal y la ranura deja pasar todo el chorro.',
+      'Cámara vertical colgada del inodoro: el cuerpo horizontal de 2 cm no tenía altura de líquido para evacuar.',
+      'Ranura de 3 × 70 mm: evacua unos 100 mL/s, el doble del chorro más fuerte previsto.',
+      'Rebose interno a 78 mm: si algo falla, el exceso va a la salida y no cae fuera.',
+      'Sensor de presión por columna de aire: no toca la orina.',
+    ],
+    specs: {
+      'Uso': 'Colgado del inodoro, vertical',
+      'Tamaño': '≈ 6,4 × 6,2 × 14 cm (22 cm con embudo)',
+      'Peso': '140–170 g',
+      'Mide': 'Volumen, caudal máximo, caudal medio y curva',
+      'Inclinación tolerada': '≈ 5°',
+      'Capacidad de salida': '≈ 100 mL/s',
+      'Error simulado': '< 1 % recto; −4 % a 10°',
+      'Sensores': 'MS4525DO (o HX710B)',
+      'Pantalla': 'OLED 0,96" 128 × 64',
+      'Coste aprox.': '45–60 €',
+    },
+    archivos: ['firmware/uroflujometro/', 'cad/uroflujometro.scad', 'infografia/uroflujometro-infografia-v01.png'],
+  },
+  {
+    id: 'v0.2',
+    fecha: '2026-10-10',
+    nombre: 'Portátil',
+    estado: 'Actual',
+    diseno: 'compacto',
+    modelo: 'v02',
+    resumen: 'Versión para llevar fuera de casa: se sujeta con la mano, de pie o sentado, y mide solo el volumen con un objetivo de ±10 mL por micción.',
+    porque: 'Hacía falta medir fuera de casa, en la mano y sin ir del todo vertical. Para el balance de líquidos solo se necesita el volumen.',
+    cambios: [
+      'Cuatro ranuras de 1,5 × 36 mm alrededor de una cámara de Ø24 mm: la inclinación se compensa casi sola.',
+      'Acelerómetro LIS3DH: el firmware calcula la carga de cada ranura según la inclinación y el movimiento de la mano.',
+      'Toma de presión en el centro, protegida por un buzo con tapón y ventanas laterales (con la toma descentrada medía de menos al inclinarlo).',
+      'Camisa anular y boquilla central: la orina sale directa, sin tubo.',
+      'Embudo acodado 30° y giratorio: sirve de pie y sentado.',
+      'Pantalla de 0,91" con solo el volumen; guarda las últimas 30 medidas.',
+    ],
+    specs: {
+      'Uso': 'En la mano, de pie o sentado',
+      'Tamaño': '≈ 4,4 × 5,7 × 8 cm (16 cm con embudo)',
+      'Peso': '60–80 g',
+      'Mide': 'Volumen',
+      'Inclinación tolerada': '≈ 25° (con acelerómetro)',
+      'Capacidad de salida': '≈ 72 mL/s',
+      'Error simulado': '±3 mL hasta 25° + calibración',
+      'Sensores': 'MS4525DO + LIS3DH',
+      'Pantalla': 'OLED 0,91" 128 × 32',
+      'Coste aprox.': '35–55 €',
+    },
+    archivos: ['firmware/uroflujometro_v02/', 'cad/uroflujometro_v02.scad', 'infografia/uroflujometro-infografia-v02.png', 'video/modelos-3d.webm'],
+  },
+];
