@@ -321,7 +321,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       <figure class="v-visor">
         <div class="visor-bar">
           <div class="seg" role="group" aria-label="Modelo">
-            <button type="button" data-vista="v01">v0.1</button><button type="button" data-vista="v02">v0.2</button><button type="button" data-vista="ambas">Comparar</button>
+            <button type="button" data-vista="v01">v0.1</button><button type="button" data-vista="v02">v0.2</button><button type="button" data-vista="ambas">Comparar</button><button type="button" data-vista="v01b">Banco v0.1</button><button type="button" data-vista="v02b">Banco v0.2</button>
           </div>
           <label class="mini"><input type="checkbox" id="vCorte"> Corte</label>
           <label class="mini"><input type="checkbox" id="vAgua"> Agua</label>
@@ -332,6 +332,7 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
           <label for="vDespiece">Despiece</label><output id="vDespieceOut" for="vDespiece">0 %</output>
           <input type="range" id="vDespiece" min="0" max="1" step="0.01" value="0">
         </div>
+        <p class="hint" id="vBancoNota" hidden>Prototipo de banco: la misma caja de electrónica con una botella en lugar de la cámara y las ranuras. Sirve para probar sensor, pantalla y acelerómetro, no el caudal. Activa «Agua» para ver el nivel y «Corte» para ver dentro.</p>
         <p class="hint">Arrastra para girar · rueda o pellizco para acercar · clic derecho para desplazar. El corte quita la mitad delantera.</p>
       </figure>
     </div>
@@ -1108,14 +1109,16 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
     const ctl = new THREE.OrbitControls(camara, renderer.domElement);
     ctl.enableDamping = true; ctl.dampingFactor = 0.08; ctl.autoRotateSpeed = 1.4;
     const plano = new THREE.Plane(new THREE.Vector3(0, 0, -1), 1000);
-    const M = { v01: Modelos3D.crear(THREE, 'v01'), v02: Modelos3D.crear(THREE, 'v02') };
+    const CLAVES = ['v01', 'v02', 'v01b', 'v02b'];
+    const M = {};
+    CLAVES.forEach(k => { M[k] = Modelos3D.crear(THREE, k); });
     Object.values(M).forEach(m => { m.materiales.forEach(mt => { mt.clippingPlanes = [plano]; }); escena.add(m.grupo); });
     const est = { vista: vSel ? vSel.modelo : 'v02', despiece: 0, corte: false, agua: false };
 
     function encuadrar() {
       escena.updateMatrixWorld(true);
       const caja = new THREE.Box3();
-      ['v01', 'v02'].forEach(k => { if (M[k].grupo.visible) M[k].partes.forEach(p => caja.expandByObject(p.obj)); });
+      CLAVES.forEach(k => { if (M[k].grupo.visible) M[k].partes.forEach(p => caja.expandByObject(p.obj)); });
       const c = caja.getCenter(new THREE.Vector3()), t = caja.getSize(new THREE.Vector3());
       const fov = camara.fov * Math.PI / 180;
       const d = Math.max(t.y / 2 / Math.tan(fov / 2), Math.max(t.x, t.z) / 2 / Math.tan(fov / 2) / camara.aspect) * 1.12 + Math.max(t.x, t.z) / 2;
@@ -1128,13 +1131,14 @@ footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line)
       ctl.update();
     }
     function aplicar(reencuadrar) {
-      ['v01', 'v02'].forEach(k => {
+      CLAVES.forEach(k => {
         const m = M[k];
-        m.grupo.visible = est.vista === 'ambas' || est.vista === k;
+        m.grupo.visible = (est.vista === 'ambas' && (k === 'v01' || k === 'v02')) || est.vista === k;
         m.grupo.position.x = est.vista === 'ambas' ? (k === 'v01' ? -80 : 85) : 0;
         Modelos3D.despiece(m, est.despiece, est.agua || est.corte);
       });
       plano.constant = est.corte ? 0 : 1000;
+      $('vBancoNota').hidden = !/b$/.test(est.vista);
       document.querySelectorAll('.seg [data-vista]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.vista === est.vista)));
       if (reencuadrar) encuadrar();
     }

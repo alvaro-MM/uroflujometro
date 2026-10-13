@@ -23,6 +23,7 @@
       pcb: mat(0x1f4f9a),
       lis: mat(0x4a3394),
       lipo: mat(0xc9cfd6, { metalness: 0.4, roughness: 0.35 }),
+      tubo: mat(0xd9d2c4, { roughness: 0.4 }),
     };
     const V2 = (x, y) => new THREE.Vector2(x, y);
     const P = (x, y, z) => new THREE.Vector3(x, z, -y);       // del .scad a three.js
@@ -226,6 +227,59 @@
       ], agua, [-28, 132]);
     }
 
+    // ------------------------------------------- prototipos de banco con botella --
+    // Misma caja de electrónica que la versión, con un anillo que sujeta una botella en lugar
+    // de la cámara (cad/prototipo_v01_botella.scad y cad/prototipo_v02_botella.scad).
+    function banco(v) {
+      const botellaD = 65, Rb = botellaD / 2 + 0.6, anilloH = 35, suelo = 3, tuboZ = 8;
+      // Datos de cada caja: interior (ancho, fondo), alto, pared; y cuánto se desplaza la
+      // electrónica del aparato real (dy hacia atrás; dzAbajo desde el suelo; dzArriba desde la tapa)
+      const c = v === 'v01'
+        ? { ancho: 46, fondo: 22, alto: 75, pared: 2.4, dy: -17.1, dzAbajo: 32.4, dzArriba: -30, oled: [24, 13, 30], boton: 44, texto: '287' }
+        : { ancho: 40, fondo: 14, alto: 58, pared: 2, dy: -15.1, dzAbajo: 10, dzArriba: 10, oled: [24, 8, 12], boton: 24, texto: '287' };
+      const Re = Rb + c.pared;
+      const y0 = -(Re - 1), yIn = y0 - c.pared, yFin = yIn - c.fondo, yExt = yFin - c.pared;
+      const xe = c.ancho / 2 + c.pared, xi = c.ancho / 2;
+
+      const cuerpo = grupo(
+        lathe([[0, 0], [Re, 0], [Re, suelo], [0, suelo], [0, 0]], M.cuerpo),
+        anillo(Rb, Re, suelo, anilloH, M.cuerpo),
+        cajaHueca([-xe, xe, yExt, y0, 0, c.alto], [-xi, xi, yFin, yIn, c.pared, c.alto], M.cuerpo),
+        botonFrente(0, yExt, c.alto - c.boton));
+      const pan = pantalla(c.oled[0], c.oled[1], c.texto, v === 'v02' ? 'apuntar' : '');
+      pan.position.copy(P(0, yExt - 0.1, c.alto - c.oled[2] - c.oled[1] / 2));
+      cuerpo.add(pan);
+
+      const tapaCaja = grupo(caja(-xe, xe, yExt, yIn + 0.5, c.alto, c.alto + 2, M.tapa));
+
+      // Electrónica: las mismas piezas que en el aparato real, movidas al interior de esta caja
+      const abajo = (x0, x1, y0_, y1, z0, z1, m) => caja(x0, x1, y0_ + c.dy, y1 + c.dy, z0 + c.dzAbajo, z1 + c.dzAbajo, m);
+      const arriba = (x0, x1, y0_, y1, z0, z1, m) => caja(x0, x1, y0_ + c.dy, y1 + c.dy, z0 + c.dzArriba, z1 + c.dzArriba, m);
+      const electronica = v === 'v01'
+        ? grupo(abajo(-10.5, 10.5, -24, -22, -24, -6, M.xiao), abajo(-17, 17, -40, -35, -26, 4, M.lipo),
+                arriba(4, 20, -26, -22, 88, 100, M.pcb), arriba(-13.7, 13.7, -41.6, -39.6, 68, 96, M.pcb))
+        : grupo(abajo(-10.5, 10.5, -25, -23, -16, 2, M.xiao), abajo(-15, 15, -34.5, -30, -16, 6, M.lipo),
+                arriba(-18, -4, -26, -22, 26, 40, M.pcb), abajo(6, 18, -34.6, -33.4, 8, 20, M.lis),
+                arriba(-19, 19, -34.8, -33, 32, 46, M.pcb));
+
+      // Botella (transparente), tubo de silicona y agua
+      const rB = botellaD / 2, zB = suelo;
+      const botella = grupo(
+        lathe([[0, zB], [rB, zB], [rB, zB + 62], [14, zB + 80], [14, zB + 90], [12.5, zB + 90], [12.5, zB + 80], [rB - 1.2, zB + 62], [rB - 1.2, zB + 1.2], [0, zB + 1.2], [0, zB]], M.embudo));
+      const tubo = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, Math.abs(-(rB - 12) - (yIn + 3)), 16), M.tubo);
+      tubo.rotation.x = Math.PI / 2;
+      tubo.position.copy(P(0, ((yIn + 3) + (-(rB - 12))) / 2, suelo + tuboZ));
+      botella.add(tubo);
+      const agua = grupo(lathe([[0, zB + 1.2], [rB - 1.2, zB + 1.2], [rB - 1.2, zB + 46], [0, zB + 46], [0, zB + 1.2]], M.agua));
+
+      return montar([
+        { nombre: 'Cuerpo', obj: cuerpo, despiece: V3(0, 0, 0) },
+        { nombre: 'Electrónica', obj: electronica, despiece: V3(0, 100, 45) },
+        { nombre: 'Tapa de la caja', obj: tapaCaja, despiece: V3(0, 45, 30) },
+        { nombre: 'Botella y tubo', obj: botella, despiece: V3(0, 90, -45) },
+      ], agua, [0, zB + 90]);
+    }
+
     function montar(partes, agua, alto) {
       const g = new THREE.Group();
       partes.forEach(p => g.add(p.obj));
@@ -233,6 +287,8 @@
       return { id, grupo: g, partes, agua, materiales: todos, alto };
     }
 
+    if (id === 'v01b') return banco('v01');
+    if (id === 'v02b') return banco('v02');
     return id === 'v01' ? v01() : v02();
   }
 

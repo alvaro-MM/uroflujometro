@@ -52,6 +52,8 @@ Piezas de cada uno: `cuerpo` (caja + anillo, se imprime tal cual) y `caja_tapa` 
 4. **Pon la botella en el anillo** con el agujero hacia la caja. El tubo pasa por el orificio de Ø6 mm de la pared y se conecta al puerto positivo del MS4525DO.
 5. Monta la electrónica según [Conexiones](#conexiones) y llena la botella con agua por la boca.
 
+Se pueden ver en el [simulador](simulador/index.html), en el visor 3D: botones «Banco v0.1» y «Banco v0.2».
+
 Qué se puede comprobar: el sensor, la pantalla, el botón y el USB; el signo de la presión (`PRESION_SIGNO`); la lectura de `estado` por el monitor serie; y, en la v0.2, los ejes del acelerómetro inclinando el conjunto.
 
 Qué no se puede comprobar: el caudal ni el volumen medido, porque no hay ranuras. Con la botella, el firmware verá subir el nivel y dará un volumen sin sentido. Tampoco prueba el oleaje, la calibración con vertidos ni la impresión de las ranuras.
