@@ -228,56 +228,75 @@
     }
 
     // ------------------------------------------- prototipos de banco con botella --
-    // Misma caja de electrónica que la versión, con un anillo que sujeta una botella en lugar
-    // de la cámara (cad/prototipo_v01_botella.scad y cad/prototipo_v02_botella.scad).
+    // Misma caja de electrónica que la versión. La cámara es un tubo de botella con las
+    // ranuras cortadas a mano, pegado en el suelo de una camisa con tolva y boquilla: el
+    // líquido entra, sale por las ranuras y se va; no se queda. Ver cad/prototipo_banco.scad.
     function banco(v) {
-      const botellaD = 65, Rb = botellaD / 2 + 0.6, anilloH = 35, suelo = 3, tuboZ = 8;
-      // Datos de cada caja: interior (ancho, fondo), alto, pared; y cuánto se desplaza la
-      // electrónica del aparato real (dy hacia atrás; dzAbajo desde el suelo; dzArriba desde la tapa)
+      const botellaD = 65, hueco = 6, asiento = 2.5, salidaLargo = 8;
       const c = v === 'v01'
-        ? { ancho: 46, fondo: 22, alto: 75, pared: 2.4, dy: -17.1, dzAbajo: 32.4, dzArriba: -30, oled: [24, 13, 30], boton: 44, texto: '287' }
-        : { ancho: 40, fondo: 14, alto: 58, pared: 2, dy: -15.1, dzAbajo: 10, dzArriba: 10, oled: [24, 8, 12], boton: 24, texto: '287' };
-      const Re = Rb + c.pared;
-      const y0 = -(Re - 1), yIn = y0 - c.pared, yFin = yIn - c.fondo, yExt = yFin - c.pared;
-      const xe = c.ancho / 2 + c.pared, xi = c.ancho / 2;
+        ? { pared: 2.4, pc: 2.4, base: 8, aw: 46, af: 22, z0: -10, z1: 75, camisa: 82, sd: 12, se: 16, tubo: 98,
+            n: 1, rb: 3, rh: 70, toma: 12, oledAncho: 24, oledAlto: 13, oledDz: 30, boton: 44, yOrig: -19.8, dzAbajo: 22.4, dzArriba: -30 }
+        : { pared: 2, pc: 2, base: 8, aw: 40, af: 14, z0: -10, z1: 48, camisa: 48, sd: 10, se: 13, tubo: 51,
+            n: 4, rb: 1.5, rh: 36, toma: 0, oledAncho: 24, oledAlto: 8, oledDz: 12, boton: 24, yOrig: -21, dzAbajo: 0, dzArriba: 0 };
+      const Rt = botellaD / 2, Rg1 = Rt + 0.4, Rd = Rg1 + 3, Rc = Rd + hueco, Re = Rc + c.pared;
+      const zb = -c.base, zt = zb - (Rc - c.sd / 2), zp = zt - salidaLargo;
+      const xe = c.aw / 2 + c.pc, y0 = -(Re - 1), yIn = y0 - c.pc, yFin = yIn - c.af, yExt = yFin - c.pc;
 
       const cuerpo = grupo(
-        lathe([[0, 0], [Re, 0], [Re, suelo], [0, suelo], [0, 0]], M.cuerpo),
-        anillo(Rb, Re, suelo, anilloH, M.cuerpo),
-        cajaHueca([-xe, xe, yExt, y0, 0, c.alto], [-xi, xi, yFin, yIn, c.pared, c.alto], M.cuerpo),
-        botonFrente(0, yExt, c.alto - c.boton));
-      const pan = pantalla(c.oled[0], c.oled[1], c.texto, v === 'v02' ? 'apuntar' : '');
-      pan.position.copy(P(0, yExt - 0.1, c.alto - c.oled[2] - c.oled[1] / 2));
+        anillo(Rc, Re, zb, c.camisa, M.cuerpo),                                                        // camisa
+        lathe([[Rc, zb], [Re, zb], [c.se / 2, zt - c.pared], [c.se / 2, zp], [c.sd / 2, zp], [c.sd / 2, zt], [Rc, zb]], M.cuerpo), // tolva y boquilla
+        lathe([[0, zb], [Rd, zb], [Rd, -3], [Rg1, 0], [0, 0], [0, zb]], M.cuerpo),                     // suelo con asiento
+        cajaHueca([-xe, xe, yExt, y0, c.z0, c.z1], [-c.aw / 2, c.aw / 2, yFin, yIn, c.z0 + c.pc, c.z1], M.cuerpo),
+        botonFrente(0, yExt, c.z1 - c.boton));
+      // Nervios que bajan del suelo hasta la tolva (siguen la pendiente de 45°)
+      const r0 = c.sd / 2 + 3, r1 = Rc + 1, forma = new THREE.Shape();
+      forma.moveTo(r0, zb + 1); forma.lineTo(r1, zb + 1); forma.lineTo(r1, zb + 1 - (Rc - r1 + 2)); forma.lineTo(r0, zb - (Rc - r0));
+      for (let k = 0; k < 6; k++) {
+        const nerv = new THREE.Mesh(new THREE.ExtrudeGeometry(forma, { depth: 2.4, bevelEnabled: false }), M.cuerpo);
+        nerv.position.z = -1.2;
+        const piv = new THREE.Group(); piv.add(nerv); piv.rotation.y = rad(30 + 60 * k);
+        cuerpo.add(piv);
+      }
+      const pan = pantalla(c.oledAncho, c.oledAlto, '287', v === 'v02' ? 'apuntar' : '');
+      pan.position.copy(P(0, yExt - 0.1, c.z1 - c.oledDz + c.oledAlto / 2));
       cuerpo.add(pan);
 
-      const tapaCaja = grupo(caja(-xe, xe, yExt, yIn + 0.5, c.alto, c.alto + 2, M.tapa));
+      const tapaCaja = grupo(caja(-xe, xe, yExt, yIn + 0.5, c.z1, c.z1 + 2, M.tapa));
 
-      // Electrónica: las mismas piezas que en el aparato real, movidas al interior de esta caja
-      const abajo = (x0, x1, y0_, y1, z0, z1, m) => caja(x0, x1, y0_ + c.dy, y1 + c.dy, z0 + c.dzAbajo, z1 + c.dzAbajo, m);
-      const arriba = (x0, x1, y0_, y1, z0, z1, m) => caja(x0, x1, y0_ + c.dy, y1 + c.dy, z0 + c.dzArriba, z1 + c.dzArriba, m);
+      // Electrónica: las piezas del aparato real, movidas al interior de esta caja
+      const dy = yIn - c.yOrig;
+      const ab = (x0, x1, a, b, z0, z1, m) => caja(x0, x1, a + dy, b + dy, z0 + c.dzAbajo, z1 + c.dzAbajo, m);
+      const ar = (x0, x1, a, b, z0, z1, m) => caja(x0, x1, a + dy, b + dy, z0 + c.dzArriba, z1 + c.dzArriba, m);
       const electronica = v === 'v01'
-        ? grupo(abajo(-10.5, 10.5, -24, -22, -24, -6, M.xiao), abajo(-17, 17, -40, -35, -26, 4, M.lipo),
-                arriba(4, 20, -26, -22, 88, 100, M.pcb), arriba(-13.7, 13.7, -41.6, -39.6, 68, 96, M.pcb))
-        : grupo(abajo(-10.5, 10.5, -25, -23, -16, 2, M.xiao), abajo(-15, 15, -34.5, -30, -16, 6, M.lipo),
-                arriba(-18, -4, -26, -22, 26, 40, M.pcb), abajo(6, 18, -34.6, -33.4, 8, 20, M.lis),
-                arriba(-19, 19, -34.8, -33, 32, 46, M.pcb));
+        ? grupo(ab(-10.5, 10.5, -24, -22, -24, -6, M.xiao), ab(-17, 17, -40, -35, -26, 4, M.lipo),
+                ar(4, 20, -26, -22, 88, 100, M.pcb), ar(-13.7, 13.7, -41.6, -39.6, 68, 96, M.pcb))
+        : grupo(ab(-10.5, 10.5, -25, -23, -6, 12, M.xiao), ab(-15, 15, -34.5, -30, -6, 16, M.lipo),
+                ar(-18, -4, -26, -22, 26, 40, M.pcb), ab(6, 18, -34.6, -33.4, 18, 30, M.lis),
+                ar(-19, 19, -34.8, -33, 32, 46, M.pcb));
 
-      // Botella (transparente), tubo de silicona y agua
-      const rB = botellaD / 2, zB = suelo;
-      const botella = grupo(
-        lathe([[0, zB], [rB, zB], [rB, zB + 62], [14, zB + 80], [14, zB + 90], [12.5, zB + 90], [12.5, zB + 80], [rB - 1.2, zB + 62], [rB - 1.2, zB + 1.2], [0, zB + 1.2], [0, zB]], M.embudo));
-      const tubo = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, Math.abs(-(rB - 12) - (yIn + 3)), 16), M.tubo);
-      tubo.rotation.x = Math.PI / 2;
-      tubo.position.copy(P(0, ((yIn + 3) + (-(rB - 12))) / 2, suelo + tuboZ));
-      botella.add(tubo);
-      const agua = grupo(lathe([[0, zB + 1.2], [rB - 1.2, zB + 1.2], [rB - 1.2, zB + 46], [0, zB + 46], [0, zB + 1.2]], M.agua));
+      // Tubo de botella (transparente) con sus ranuras, y el deflector sobre la toma
+      const hb = c.rb / Rt * 180 / Math.PI;
+      const zTop = c.tubo - asiento;
+      const tubo = grupo(
+        anillo(Rt - 0.4, Rt, -asiento, 0, M.embudo),
+        aroConHuecos(Rt - 0.4, Rt, 0, c.rh, Array.from({ length: c.n }, (_, i) => [i * 360 / c.n, hb]), M.embudo),
+        anillo(Rt - 0.4, Rt, c.rh, zTop, M.embudo));
+      const deflector = grupo(lathe([[0, 5], [12, 5], [12, 6.6], [0, 6.6], [0, 5]], M.boton, { cx: c.toma }));
+      [90, 210, 330].forEach(a => deflector.add(anillo(0, 1.5, 0, 5.5, M.boton, { cx: c.toma + 8 * Math.cos(rad(a)), cy: 8 * Math.sin(rad(a)) })));
+
+      // Plantilla para marcar las ranuras: solo se ve al separar las piezas
+      const plantilla = grupo(
+        aroConHuecos(Rt + 0.25, Rt + 2.45, 0, c.tubo, Array.from({ length: c.n }, (_, i) => [i * 360 / c.n, hb * 2]), M.soporte));
+      const agua = grupo(lathe([[0, 0], [Rt - 0.5, 0], [Rt - 0.5, 14], [0, 14], [0, 0]], M.agua));
 
       return montar([
         { nombre: 'Cuerpo', obj: cuerpo, despiece: V3(0, 0, 0) },
         { nombre: 'Electrónica', obj: electronica, despiece: V3(0, 100, 45) },
         { nombre: 'Tapa de la caja', obj: tapaCaja, despiece: V3(0, 45, 30) },
-        { nombre: 'Botella y tubo', obj: botella, despiece: V3(0, 90, -45) },
-      ], agua, [0, zB + 90]);
+        { nombre: 'Tubo de botella', obj: tubo, despiece: V3(0, 90, 0) },
+        { nombre: 'Deflector', obj: deflector, despiece: V3(0, 150, 0) },
+        { nombre: 'Plantilla de ranuras', obj: plantilla, despiece: V3(95, 90, 0), soloDespiece: true },
+      ], agua, [zp, zTop]);
     }
 
     function montar(partes, agua, alto) {
@@ -294,7 +313,7 @@
 
   // Separa las piezas (f de 0 a 1). El agua solo se ve con el aparato montado.
   function despiece(modelo, f, verAgua) {
-    modelo.partes.forEach(p => p.obj.position.copy(p.despiece).multiplyScalar(f));
+    modelo.partes.forEach(p => { p.obj.position.copy(p.despiece).multiplyScalar(f); if (p.soloDespiece) p.obj.visible = f > 0.02; });
     modelo.agua.visible = !!verAgua && f < 0.02;
   }
 

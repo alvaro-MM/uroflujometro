@@ -37,26 +37,52 @@ Lo dibuja [video/grabar.html](video/grabar.html); abierto con `?t=12` muestra el
 
 ## Prototipo de banco con botella (v0.1 y v0.2)
 
-Para probar la electrónica y el firmware **sin imprimir la cámara, las ranuras ni el buzo**, cada versión tiene un cuerpo de banco: la misma caja de electrónica y, en lugar de la cámara, un anillo que sujeta una botella pequeña. La presión del fondo de la botella llega al sensor por un tubo de silicona, igual que en el aparato real.
+Para montar en casa cada versión antes de tener el chasis definitivo. Lleva la misma caja de electrónica, pero la cámara y sus ranuras impresas se sustituyen por un **tubo de botella de plástico** con las ranuras cortadas a mano. **El líquido no se estanca:** entra por arriba, sale por las ranuras, cae por la camisa y sale por la boquilla, igual que en el aparato real. Con un depósito cerrado el prototipo no mediría nada.
 
-| Versión | Modelo | Caja (interior) |
+| Versión | Modelo | Caja (interior) | Ranuras en el tubo |
+|---|---|---|---|
+| v0.2 | [cad/prototipo_v02_botella.scad](cad/prototipo_v02_botella.scad) | 40 × 14 mm, OLED 0,91" | 4 de 1,5 mm, 36 mm de alto |
+| v0.1 | [cad/prototipo_v01_botella.scad](cad/prototipo_v01_botella.scad) | 46 × 22 mm, OLED 0,96" | 1 de 3 mm, 70 mm de alto |
+
+Las piezas comunes están en [cad/prototipo_banco.scad](cad/prototipo_banco.scad); los dos archivos de versión la incluyen, así que deben estar en la misma carpeta. Se ven en el [simulador](simulador/index.html): botones «Banco v0.1» y «Banco v0.2».
+
+| Pieza | Qué es | Impresión |
 |---|---|---|
-| v0.2 | [cad/prototipo_v02_botella.scad](cad/prototipo_v02_botella.scad) | 40 × 14 mm, OLED 0,91" |
-| v0.1 | [cad/prototipo_v01_botella.scad](cad/prototipo_v01_botella.scad) | 46 × 22 mm, OLED 0,96" |
+| `cuerpo` | Caja de electrónica, camisa, tolva y boquilla, con el suelo de la cámara y su asiento para el tubo | De pie, sin soportes |
+| `caja_tapa` | Tapa de la caja | Con la placa abajo |
+| `deflector` | Tapa sobre la toma de presión: el chorro no la golpea | Tal cual |
+| `plantilla` | Anillo que se pone sobre el tubo para marcar las ranuras | De pie |
 
-Piezas de cada uno: `cuerpo` (caja + anillo, se imprime tal cual) y `caja_tapa` (placa abajo). Los ejes y el sitio de la botella coinciden con los del aparato real, así que el firmware y `MAPA_ACC` valen sin cambios.
+### Preparar el tubo de botella
 
-1. **Mide la botella** y pon su diámetro exterior en `botella_d` (por defecto 65 mm). Una botella de agua de 330–500 mL suele servir.
-2. **Taladra la botella** con una broca de 4 mm, a unos 8 mm del fondo (la altura de `tubo_z`).
-3. **Pasa un tubo de silicona de 3 mm interior** por el agujero, con el extremo dentro de la botella, y séllalo por fuera con silicona o termocola.
-4. **Pon la botella en el anillo** con el agujero hacia la caja. El tubo pasa por el orificio de Ø6 mm de la pared y se conecta al puerto positivo del MS4525DO.
-5. Monta la electrónica según [Conexiones](#conexiones) y llena la botella con agua por la boca.
+1. **Elige una botella cilíndrica y recta**, sin relieves en la parte que vas a usar. Mide su diámetro exterior y pon ese valor en `botella_d` (por defecto 65 mm). Si cambia, vuelve a exportar el `cuerpo`, la `plantilla` y el `deflector`.
+2. **Corta un tubo** de `tubo_largo` mm (51 en la v0.2, 98 en la v0.1), sin fondo ni cuello.
+3. **Marca las ranuras** con la `plantilla` puesta sobre el tubo. La ranura empieza a 2,5 mm del borde inferior del tubo, que es lo que entra en el asiento del suelo. Córtalas con una hoja fina o un disco de corte de 1 mm y quita las rebabas por dentro. En la v0.1, la de 3 mm sale con dos cortes paralelos.
+4. **Pega el tubo en el asiento** del suelo con silicona, con la ranura 1 hacia +X. El borde inferior de las ranuras queda justo en el suelo de la cámara, así no se acumula líquido por debajo.
+5. Deja el `deflector` apoyado sobre el pozo de la toma, sin pegar.
+6. Coloca un tubito de latón de 3 mm (o una aguja roma) en el agujero Ø3,1 de la pared de la caja y conecta el tubo de silicona al sensor, como en el aparato real.
 
-Se pueden ver en el [simulador](simulador/index.html), en el visor 3D: botones «Banco v0.1» y «Banco v0.2».
+Monta la electrónica según [Conexiones](#conexiones). Vierte el agua por arriba, sobre el deflector. Pon la boquilla sobre una cubeta o un fregadero, o un tubo hasta uno.
 
-Qué se puede comprobar: el sensor, la pantalla, el botón y el USB; el signo de la presión (`PRESION_SIGNO`); la lectura de `estado` por el monitor serie; y, en la v0.2, los ejes del acelerómetro inclinando el conjunto.
+### Ajustes del firmware
 
-Qué no se puede comprobar: el caudal ni el volumen medido, porque no hay ranuras. Con la botella, el firmware verá subir el nivel y dará un volumen sin sentido. Tampoco prueba el oleaje, la calibración con vertidos ni la impresión de las ranuras.
+La geometría del tubo no es la del aparato impreso. Cambia estas constantes en `config.h` de la versión que montes:
+
+| Constante | v0.2 | v0.1 |
+|---|---|---|
+| `RADIO_RANURAS_MM` | `botella_d / 2 − 0,3` (32,2 con 65 mm) | no existe |
+| `RANURA_ANCHO_MM` | el ancho que hayas cortado (1,5) | 3,0 |
+| `RANURA_ALTO_MM` | 36,0 | 70,0 |
+| `REBOSE_MM` | `tubo_largo − 2,5` (48,5) | `tubo_largo − 2,5` (95,5) |
+| `N_RANURAS` | 4 | no existe |
+
+El tubo no tiene ventanas de rebose: si el nivel llega al borde del tubo, el líquido se sale por arriba y la medida es dudosa. `CD_RANURA` se calibra con vertidos, como en el aparato real.
+
+### Qué se puede comprobar
+
+El sensor, la pantalla, el botón, el USB y el signo de la presión (`PRESION_SIGNO`). También el volumen medido, ya que hay ranuras y el líquido sale, y la calibración con vertidos pesados. En la v0.2, además, los ejes del acelerómetro inclinando el conjunto.
+
+Límites: las ranuras cortadas a mano no son tan regulares como las impresas, así que `a` y `n` saldrán distintos. Un tubo de plástico fino se deforma si lo aprietas. No se prueba la impresión de las ranuras de 1,5 mm.
 
 ## Casa: sin fabricar nada
 
