@@ -35,6 +35,27 @@ node video/grabar_video.js
 
 Lo dibuja [video/grabar.html](video/grabar.html); abierto con `?t=12` muestra el fotograma del segundo 12.
 
+## Prototipo de banco con botella (v0.1 y v0.2)
+
+Para probar la electrónica y el firmware **sin imprimir la cámara, las ranuras ni el buzo**, cada versión tiene un cuerpo de banco: la misma caja de electrónica y, en lugar de la cámara, un anillo que sujeta una botella pequeña. La presión del fondo de la botella llega al sensor por un tubo de silicona, igual que en el aparato real.
+
+| Versión | Modelo | Caja (interior) |
+|---|---|---|
+| v0.2 | [cad/prototipo_v02_botella.scad](cad/prototipo_v02_botella.scad) | 40 × 14 mm, OLED 0,91" |
+| v0.1 | [cad/prototipo_v01_botella.scad](cad/prototipo_v01_botella.scad) | 46 × 22 mm, OLED 0,96" |
+
+Piezas de cada uno: `cuerpo` (caja + anillo, se imprime tal cual) y `caja_tapa` (placa abajo). Los ejes y el sitio de la botella coinciden con los del aparato real, así que el firmware y `MAPA_ACC` valen sin cambios.
+
+1. **Mide la botella** y pon su diámetro exterior en `botella_d` (por defecto 65 mm). Una botella de agua de 330–500 mL suele servir.
+2. **Taladra la botella** con una broca de 4 mm, a unos 8 mm del fondo (la altura de `tubo_z`).
+3. **Pasa un tubo de silicona de 3 mm interior** por el agujero, con el extremo dentro de la botella, y séllalo por fuera con silicona o termocola.
+4. **Pon la botella en el anillo** con el agujero hacia la caja. El tubo pasa por el orificio de Ø6 mm de la pared y se conecta al puerto positivo del MS4525DO.
+5. Monta la electrónica según [Conexiones](#conexiones) y llena la botella con agua por la boca.
+
+Qué se puede comprobar: el sensor, la pantalla, el botón y el USB; el signo de la presión (`PRESION_SIGNO`); la lectura de `estado` por el monitor serie; y, en la v0.2, los ejes del acelerómetro inclinando el conjunto.
+
+Qué no se puede comprobar: el caudal ni el volumen medido, porque no hay ranuras. Con la botella, el firmware verá subir el nivel y dará un volumen sin sentido. Tampoco prueba el oleaje, la calibración con vertidos ni la impresión de las ranuras.
+
 ## Casa: sin fabricar nada
 
 - **Recolector de orina tipo «sombrero» graduado** (farmacia, ortopedia o internet, 3–8 €). Se pone bajo el asiento, en la parte delantera de la taza. Sentado, recoge la orina y las heces caen detrás. De pie, se levanta el asiento y se apunta al recolector.
