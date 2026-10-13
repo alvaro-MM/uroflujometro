@@ -30,7 +30,7 @@ window.VERSIONES = [
       'Pantalla': 'OLED 0,96" 128 × 64',
       'Coste aprox.': '45–60 €',
     },
-    archivos: ['firmware/uroflujometro/', 'cad/uroflujometro.scad', 'cad/prototipo_v01_botella.scad', 'infografia/uroflujometro-infografia-v01.png'],
+    archivos: ['firmware/uroflujometro/', 'cad/uroflujometro.scad', 'infografia/uroflujometro-infografia-v01.png'],
   },
   {
     id: 'v0.2',
@@ -61,6 +61,6 @@ window.VERSIONES = [
       'Pantalla': 'OLED 0,91" 128 × 32',
       'Coste aprox.': '35–55 €',
     },
-    archivos: ['firmware/uroflujometro_v02/', 'cad/uroflujometro_v02.scad', 'cad/prototipo_v02_botella.scad', 'infografia/uroflujometro-infografia-v02.png', 'video/modelos-3d.webm'],
+    archivos: ['firmware/uroflujometro_v02/', 'cad/uroflujometro_v02.scad', 'infografia/uroflujometro-infografia-v02.png', 'video/modelos-3d.webm'],
   },
 ];

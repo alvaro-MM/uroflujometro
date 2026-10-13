@@ -35,54 +35,64 @@ node video/grabar_video.js
 
 Lo dibuja [video/grabar.html](video/grabar.html); abierto con `?t=12` muestra el fotograma del segundo 12.
 
-## Prototipo de banco con botella (v0.1 y v0.2)
+## Prototipo casero (v0.1 y v0.2), sin impresión
 
-Para montar en casa cada versión antes de tener el chasis definitivo. Lleva la misma caja de electrónica, pero la cámara y sus ranuras impresas se sustituyen por un **tubo de botella de plástico** con las ranuras cortadas a mano. **El líquido no se estanca:** entra por arriba, sale por las ranuras, cae por la camisa y sale por la boquilla, igual que en el aparato real. Con un depósito cerrado el prototipo no mediría nada.
+Para probar la electrónica y el firmware con cosas de casa, antes de tener un chasis bien hecho. Es una aproximación: sirve para ver que el sensor, la pantalla y el cálculo funcionan, y para sacar una primera calibración. **El líquido no se queda en la cámara**: entra por arriba, sale por las ranuras y cae a un cuenco. Con un recipiente cerrado el prototipo no mediría nada.
 
-| Versión | Modelo | Caja (interior) | Ranuras en el tubo |
-|---|---|---|---|
-| v0.2 | [cad/prototipo_v02_botella.scad](cad/prototipo_v02_botella.scad) | 40 × 14 mm, OLED 0,91" | 4 de 1,5 mm, 36 mm de alto |
-| v0.1 | [cad/prototipo_v01_botella.scad](cad/prototipo_v01_botella.scad) | 46 × 22 mm, OLED 0,96" | 1 de 3 mm, 70 mm de alto |
+Se ve en el [simulador](simulador/index.html), con los botones «Casero v0.1» y «Casero v0.2» del visor 3D.
 
-Las piezas comunes están en [cad/prototipo_banco.scad](cad/prototipo_banco.scad); los dos archivos de versión la incluyen, así que deben estar en la misma carpeta. Se ven en el [simulador](simulador/index.html): botones «Banco v0.1» y «Banco v0.2».
+### Qué hace cada cosa
 
-| Pieza | Qué es | Impresión |
+| Pieza del aparato | En el prototipo casero |
+|---|---|
+| Cámara con ranuras | Vaso o botella de plástico rígido, **recto y de fondo plano**, con las ranuras cortadas a mano |
+| Camisa y boquilla | Cuenco o fuente hondos. La cámara se apoya en dos cucharas de madera o listones sobre el borde |
+| Caja de electrónica | Táper pequeño. La pantalla se ve por una ventana cortada en la tapa o en un lado |
+| Embudo | La parte de arriba de otra botella cortada, o un embudo de cocina |
+| Toma de presión | Tubo de silicona de acuario (de 2–3 mm interior) que llega hasta el suelo de la cámara |
+| Tapón del buzo | Un tapón de botella pegado encima del extremo del tubo, sobre dos trozos de pajita |
+
+Materiales que no son de la lista de compra: cúter nuevo, regla, tijeras, termocola o silicona, cinta americana, gomas elásticas, una broca o aguja gruesa para el agujero del tubo, una báscula de cocina de 1 g y un vaso medidor.
+
+### Medidas
+
+| | v0.2 | v0.1 |
 |---|---|---|
-| `cuerpo` | Caja de electrónica, camisa, tolva y boquilla, con el suelo de la cámara y su asiento para el tubo | De pie, sin soportes |
-| `caja_tapa` | Tapa de la caja | Con la placa abajo |
-| `deflector` | Tapa sobre la toma de presión: el chorro no la golpea | Tal cual |
-| `plantilla` | Anillo que se pone sobre el tubo para marcar las ranuras | De pie |
+| Altura de la cámara sobre el suelo | 60 mm | 95 mm |
+| Ranuras | 4, de 1,5 mm de ancho y 36 mm de alto, a 90° | 1, de 3 mm de ancho y 70 mm de alto |
+| Diámetro de la cámara | cualquiera entre 50 y 80 mm (la de referencia mide 65) | igual |
+| Dónde acaba el tubo de presión | en el centro del suelo | a 12 mm del centro, hacia la ranura |
 
-### Preparar el tubo de botella
+### Montaje
 
-1. **Elige una botella cilíndrica y recta**, sin relieves en la parte que vas a usar. Mide su diámetro exterior y pon ese valor en `botella_d` (por defecto 65 mm). Si cambia, vuelve a exportar el `cuerpo`, la `plantilla` y el `deflector`.
-2. **Corta un tubo** de `tubo_largo` mm (51 en la v0.2, 98 en la v0.1), sin fondo ni cuello.
-3. **Marca las ranuras** con la `plantilla` puesta sobre el tubo. La ranura empieza a 2,5 mm del borde inferior del tubo, que es lo que entra en el asiento del suelo. Córtalas con una hoja fina o un disco de corte de 1 mm y quita las rebabas por dentro. En la v0.1, la de 3 mm sale con dos cortes paralelos.
-4. **Pega el tubo en el asiento** del suelo con silicona, con la ranura 1 hacia +X. El borde inferior de las ranuras queda justo en el suelo de la cámara, así no se acumula líquido por debajo.
-5. Deja el `deflector` apoyado sobre el pozo de la toma, sin pegar.
-6. Coloca un tubito de latón de 3 mm (o una aguja roma) en el agujero Ø3,1 de la pared de la caja y conecta el tubo de silicona al sensor, como en el aparato real.
-
-Monta la electrónica según [Conexiones](#conexiones). Vierte el agua por arriba, sobre el deflector. Pon la boquilla sobre una cubeta o un fregadero, o un tubo hasta uno.
+1. **Prepara la cámara.** Corta el vaso o la botella a la altura de la tabla. Si el fondo es cóncavo, rellénalo con termocola o silicona hasta dejarlo plano: lo que quede por debajo del borde de las ranuras es líquido que se queda.
+2. **Corta las ranuras.** Márcalas con regla y rotulador, con el borde de abajo **justo a ras del suelo** ya plano. Con un cúter nuevo haz dos cortes paralelos y quita la tira; una hoja de segueta fina también sirve. En la v0.2 repártelas a 90°. Quita las rebabas por dentro y **mide el ancho real** con una broca: la que entra justa.
+3. **Haz el agujero del tubo** con una aguja caliente o una broca, a 3–4 mm sobre el suelo y en el lado de la ranura 3 (el opuesto a la 1, hacia el táper). Pasa el tubo de silicona, déjalo tumbado sobre el suelo hasta el punto de la tabla, con el extremo cortado recto y abierto, y sella el agujero por fuera con termocola. Fija el extremo con una gota.
+4. **Pon el tapón** de botella boca abajo sobre dos trozos de pajita pegados al suelo, cubriendo el extremo del tubo sin tocarlo. El chorro cae encima y se reparte, en vez de golpear la toma.
+5. **Apoya la cámara** sobre las cucharas, que cruzan el cuenco. Deja el borde de las ranuras bien por encima del fondo del cuenco: si el agua del cuenco sube hasta ahí, las ranuras no vierten bien. Vacía el cuenco entre pruebas.
+6. **Monta la electrónica en el táper** con cinta de doble cara o termocola: XIAO, MS4525DO y, en la v0.2, la LIS3DH. Conexiones según [Conexiones](#conexiones). Conecta el otro extremo del tubo al puerto positivo del sensor. Para alimentarla, una batería externa (powerbank) por USB-C: el cable sale por una muesca de la tapa.
+7. **Acelerómetro (solo v0.2).** Pega la placa **plana** en el suelo del táper, con su eje X hacia la ranura 1 y su eje Y a 90° en sentido antihorario visto desde arriba. Con esa posición `MAPA_ACC` es la identidad: `{ {1,0,0}, {0,1,0}, {0,0,1} }`. Si quieres probar la inclinación, sujeta el táper a la cámara con gomas o cinta, para que se muevan juntos.
+8. **Vierte el agua** por el embudo, apoyado en el borde de la cámara.
 
 ### Ajustes del firmware
 
-La geometría del tubo no es la del aparato impreso. Cambia estas constantes en `config.h` de la versión que montes:
+Cambia estas constantes en el `config.h` de la versión que montes, con las medidas reales de tu cámara:
 
 | Constante | v0.2 | v0.1 |
 |---|---|---|
-| `RADIO_RANURAS_MM` | `botella_d / 2 − 0,3` (32,2 con 65 mm) | no existe |
-| `RANURA_ANCHO_MM` | el ancho que hayas cortado (1,5) | 3,0 |
-| `RANURA_ALTO_MM` | 36,0 | 70,0 |
-| `REBOSE_MM` | `tubo_largo − 2,5` (48,5) | `tubo_largo − 2,5` (95,5) |
 | `N_RANURAS` | 4 | no existe |
+| `RANURA_ANCHO_MM` | el ancho medido | el ancho medido |
+| `RANURA_ALTO_MM` | alto medido de las ranuras | alto medido de la ranura |
+| `RADIO_RANURAS_MM` | radio interior de la cámara | no existe |
+| `REBOSE_MM` | altura de la cámara sobre el suelo | altura de la cámara sobre el suelo |
 
-El tubo no tiene ventanas de rebose: si el nivel llega al borde del tubo, el líquido se sale por arriba y la medida es dudosa. `CD_RANURA` se calibra con vertidos, como en el aparato real.
+La cámara no tiene ventanas de rebose: si el nivel llega al borde, el agua se sale por arriba y esa medida no vale. `CD_RANURA` y el exponente se ajustan con los vertidos pesados de [Calibración](#calibración-imprescindible).
 
 ### Qué se puede comprobar
 
-El sensor, la pantalla, el botón, el USB y el signo de la presión (`PRESION_SIGNO`). También el volumen medido, ya que hay ranuras y el líquido sale, y la calibración con vertidos pesados. En la v0.2, además, los ejes del acelerómetro inclinando el conjunto.
+El sensor, la pantalla, el botón, el signo de la presión (`PRESION_SIGNO`) y el volumen medido frente al pesado en báscula. En la v0.2, los ejes del acelerómetro inclinando el conjunto.
 
-Límites: las ranuras cortadas a mano no son tan regulares como las impresas, así que `a` y `n` saldrán distintos. Un tubo de plástico fino se deforma si lo aprietas. No se prueba la impresión de las ranuras de 1,5 mm.
+Límites: las ranuras cortadas a mano son irregulares, así que `a` y `n` saldrán distintos a los del aparato impreso. Un recipiente fino se deforma si lo aprietas y cambia la altura de las ranuras. La medida con inclinación es menos fiable porque el tubo de presión acaba en el suelo, no en un pozo protegido.
 
 ## Casa: sin fabricar nada
 
