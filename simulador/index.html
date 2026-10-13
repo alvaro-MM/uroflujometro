@@ -1,0 +1,1189 @@
+<title>Simulador del uroflujómetro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Banco de ensayo: raíl de controles a la izquierda; veredicto, corte del aparato y trazas a la derecha */
+:root {
+  --bg: #eef2f1;
+  --surface: #fbfcfb;
+  --surface-2: #f3f6f5;
+  --ink: #15201e;
+  --ink-2: #485451;
+  --muted: #7a8582;
+  --line: #dbe2e0;
+  --line-2: #c3ccc9;
+  --accent: #0d6e6a;
+  --accent-ink: #ffffff;
+  --accent-wash: rgba(13, 110, 106, 0.09);
+  --liquid: #d9a21b;
+  --liquid-wash: rgba(217, 162, 27, 0.45);
+  --liquid-soft: rgba(217, 162, 27, 0.14);
+  --s1: #2a78d6;
+  --s2: #eb6834;
+  --good: #0ca30c;
+  --good-ink: #006300;
+  --warn: #fab219;
+  --warn-ink: #855600;
+  --crit: #d03b3b;
+  --crit-ink: #b42323;
+  --device: #24292c;
+  --device-2: #454d52;
+  --oled-bg: #03060a;
+  --oled-ink: #bfe8ff;
+  --f-display: "Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-body: "Barlow", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0c1211; --surface: #141c1b; --surface-2: #182220; --ink: #e6eeec; --ink-2: #b1bdba;
+    --muted: #83908c; --line: #24302d; --line-2: #34413e; --accent: #4cb8ae; --accent-ink: #052220;
+    --accent-wash: rgba(76, 184, 174, 0.13); --liquid: #e6b44a; --liquid-wash: rgba(230, 180, 74, 0.42);
+    --liquid-soft: rgba(230, 180, 74, 0.14); --s1: #3987e5; --s2: #d95926; --good-ink: #46cf46;
+    --warn-ink: #fab219; --crit-ink: #ff8080; --device: #30383c; --device-2: #59636a;
+    --oled-bg: #000000; --oled-ink: #bfe8ff; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0c1211; --surface: #141c1b; --surface-2: #182220; --ink: #e6eeec; --ink-2: #b1bdba;
+  --muted: #83908c; --line: #24302d; --line-2: #34413e; --accent: #4cb8ae; --accent-ink: #052220;
+  --accent-wash: rgba(76, 184, 174, 0.13); --liquid: #e6b44a; --liquid-wash: rgba(230, 180, 74, 0.42);
+  --liquid-soft: rgba(230, 180, 74, 0.14); --s1: #3987e5; --s2: #d95926; --good-ink: #46cf46;
+  --warn-ink: #fab219; --crit-ink: #ff8080; --device: #30383c; --device-2: #59636a;
+  --oled-bg: #000000; --oled-ink: #bfe8ff; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 15px;
+  line-height: 1.5;
+}
+.wrap { max-width: 1240px; margin: 0 auto; padding: 28px 20px 48px; display: grid; gap: 24px; }
+@media (max-width: 520px) { .wrap { padding: 20px 16px 40px; } }
+
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; letter-spacing: 0.005em; }
+h1 { font-size: clamp(30px, 4.2vw, 44px); font-weight: 700; line-height: 1.02; }
+h2 { font-size: 22px; font-weight: 600; line-height: 1.15; }
+h3 { font-size: 17px; font-weight: 600; }
+p { margin: 0; }
+.eyebrow {
+  font-family: var(--f-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 8px;
+}
+.lede { color: var(--ink-2); max-width: 64ch; margin-top: 10px; font-size: 16px; }
+
+header.top { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: flex-end; justify-content: space-between; }
+.spec {
+  display: grid; grid-template-columns: repeat(3, auto); gap: 4px 22px; font-family: var(--f-mono);
+  font-size: 12px; color: var(--ink-2);
+}
+.spec b { display: block; font-family: var(--f-display); font-size: 20px; font-weight: 600; color: var(--ink); }
+
+.grid { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 900px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- Raíl de controles ---------- */
+.rail {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 18px; display: grid; gap: 20px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px);
+}
+@media (max-width: 900px) { .rail { position: static; } }
+fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 10px; min-width: 0; }
+legend {
+  font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase;
+  color: var(--muted); padding: 0; margin-bottom: 8px;
+}
+.opt {
+  display: grid; grid-template-columns: 18px 1fr; gap: 10px; align-items: start; cursor: pointer;
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface);
+}
+.opt:hover { border-color: var(--line-2); }
+.opt:has(input:checked) { border-color: var(--accent); background: var(--accent-wash); }
+.opt input { margin: 3px 0 0; accent-color: var(--accent); }
+.opt b { display: block; font-weight: 600; }
+.opt small { display: block; color: var(--ink-2); font-size: 13px; line-height: 1.35; }
+
+.field { display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; align-items: baseline; }
+.field label { font-size: 14px; color: var(--ink-2); }
+.field output { font-family: var(--f-mono); font-size: 13px; font-variant-numeric: tabular-nums; color: var(--ink); }
+.field input[type=range] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); margin: 2px 0 0; }
+select {
+  width: 100%; font: inherit; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line-2);
+  border-radius: 6px; padding: 8px 10px;
+}
+.hint { font-size: 13px; color: var(--ink-2); line-height: 1.4; }
+.hint code { font-family: var(--f-mono); font-size: 12px; }
+button {
+  font: inherit; cursor: pointer; border-radius: 6px; border: 1px solid var(--line-2);
+  background: var(--surface-2); color: var(--ink); padding: 7px 12px;
+}
+button:hover { border-color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#grpParams[disabled], #grpCompacto[disabled] { opacity: 0.45; }
+input:disabled + output, .field:has(input:disabled) { opacity: 0.45; }
+
+/* ---------- Tablero ---------- */
+.board { display: grid; gap: 16px; min-width: 0; }
+.verdict {
+  display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start;
+  padding: 14px 16px; border-radius: 10px; background: var(--surface); border: 1px solid var(--line);
+  border-left: 5px solid var(--st, var(--line-2));
+}
+.verdict .ico {
+  width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--st); color: #fff; font-weight: 700; font-size: 17px; line-height: 1;
+}
+.verdict h2 { font-size: 21px; }
+.verdict p { color: var(--ink-2); margin-top: 2px; max-width: 75ch; }
+.verdict[data-st=good] { --st: var(--good); }
+.verdict[data-st=warn] { --st: var(--warn); }
+.verdict[data-st=warn] .ico { color: #2b1d00; }
+.verdict[data-st=crit] { --st: var(--crit); }
+
+.tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-width: 0; }
+.tile .k { font-size: 13px; color: var(--ink-2); }
+.tile .v { font-family: var(--f-display); font-weight: 600; font-size: 30px; line-height: 1.1; margin-top: 2px; }
+.tile .v small { font-size: 16px; font-weight: 500; color: var(--ink-2); margin-left: 3px; }
+.tile .s { font-size: 13px; color: var(--muted); margin-top: 2px; }
+.tile .s .bad { color: var(--crit-ink); font-weight: 600; }
+.tile .s .ok { color: var(--good-ink); font-weight: 600; }
+
+.bench {
+  display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 16px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px;
+}
+@media (max-width: 760px) { .bench { grid-template-columns: minmax(0, 1fr); } }
+.bench figure { margin: 0; min-width: 0; }
+.cap { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+#esquema { width: 100%; max-width: 420px; height: auto; display: block; margin: 0 auto; }
+
+/* Clases del esquema SVG */
+.sv-wall { fill: var(--device); }
+.sv-wall-2 { fill: var(--device-2); }
+.sv-ghost { fill: none; stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.sv-liq { fill: var(--liquid-wash); }
+.sv-liq-solid { fill: var(--liquid); }
+.sv-spill { fill: var(--crit); }
+.sv-line { fill: none; stroke: var(--muted); stroke-width: 1; }
+.sv-tube { fill: none; stroke: var(--device-2); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.sv-air { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 2 2; }
+.sv-funnel { fill: var(--surface-2); stroke: var(--line-2); stroke-width: 1.5; }
+.sv-txt { fill: var(--ink-2); font-family: var(--f-body); font-size: 11px; }
+.sv-txt-b { fill: var(--ink); font-family: var(--f-mono); font-size: 11px; font-weight: 600; }
+.sv-txt-crit { fill: var(--crit-ink); font-family: var(--f-body); font-size: 12px; font-weight: 600; }
+.sv-box { fill: var(--surface-2); stroke: var(--device-2); stroke-width: 1.5; }
+.sv-mark { stroke: var(--ink); stroke-width: 1.2; }
+
+.side { display: grid; gap: 14px; align-content: start; }
+.oled-shell {
+  background: var(--device); border-radius: 16px; padding: 14px; display: grid; place-items: center;
+}
+#oled {
+  width: 100%; max-width: 320px; aspect-ratio: 2 / 1; height: auto; display: block;
+  background: var(--oled-bg); border-radius: 4px; image-rendering: pixelated;
+}
+.transport { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; }
+.transport input[type=range] { width: 100%; accent-color: var(--accent); }
+#tLabel { font-family: var(--f-mono); font-size: 13px; font-variant-numeric: tabular-nums; min-width: 6ch; text-align: right; }
+#btnPlay { min-width: 104px; background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+.speed { display: flex; gap: 6px; align-items: center; font-size: 13px; color: var(--ink-2); }
+.speed select { width: auto; padding: 4px 8px; }
+.live { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; font-size: 13px; }
+.live dt { color: var(--ink-2); }
+.live dd { margin: 0; font-family: var(--f-mono); text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---------- Gráficas ---------- */
+.chart { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px 10px; margin: 0; position: relative; min-width: 0; }
+.chart-head { display: flex; flex-wrap: wrap; gap: 6px 18px; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+.chart-head h3 { font-size: 16px; }
+.legend { display: flex; gap: 14px; font-size: 13px; color: var(--ink-2); flex-wrap: wrap; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 16px; height: 2px; border-radius: 1px; background: var(--c); display: inline-block; }
+.plot { width: 100%; display: block; touch-action: pan-y; }
+.plot text { font-family: var(--f-body); font-size: 11px; fill: var(--muted); }
+.plot .grid line { stroke: var(--line); stroke-width: 1; }
+.plot .base { stroke: var(--line-2); stroke-width: 1; }
+.plot .ref { stroke-width: 1.5; }
+.plot .ref-warn { stroke: var(--warn); }
+.plot .ref-crit { stroke: var(--crit); }
+.plot .ref-muted { stroke: var(--muted); }
+.plot .ref-label { fill: var(--ink-2); font-size: 11px; }
+.plot .cursor { stroke: var(--ink); stroke-width: 1; opacity: 0.55; }
+.plot .hover-line { stroke: var(--ink-2); stroke-width: 1; }
+.plot .dot { stroke: var(--surface); stroke-width: 2; }
+.tip {
+  position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line-2);
+  border-radius: 6px; padding: 6px 9px; font-size: 12px; line-height: 1.45; box-shadow: 0 4px 14px rgba(0,0,0,.12);
+  white-space: nowrap; z-index: 2;
+}
+.tip b { font-family: var(--f-mono); font-weight: 500; }
+.tip .sw { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 6px; }
+
+/* ---------- Notas ---------- */
+.notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 28px; }
+@media (max-width: 760px) { .notes { grid-template-columns: minmax(0, 1fr); } }
+.notes .head { grid-column: 1 / -1; }
+.note { border-top: 2px solid var(--line-2); padding-top: 12px; min-width: 0; }
+.note h3 { margin-bottom: 4px; }
+.note p { color: var(--ink-2); max-width: 62ch; }
+.note .formula { font-family: var(--f-mono); font-size: 13px; color: var(--ink); background: var(--surface-2); padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+footer { color: var(--muted); font-size: 13px; border-top: 1px solid var(--line); padding-top: 14px; }
+
+/* ---------- Versiones y visor 3D ---------- */
+.versiones { display: grid; gap: 16px; }
+.v-head .lede { margin-top: 6px; }
+.v-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .v-grid { grid-template-columns: minmax(0, 1fr); } }
+.v-card, .v-visor, .v-comp { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px; min-width: 0; margin: 0; }
+.v-linea { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.vchip { display: grid; text-align: left; gap: 1px; padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--surface-2); color: var(--ink); min-width: 130px; }
+.vchip b { font-family: var(--f-mono); font-size: 14px; }
+.vchip span { font-size: 13px; color: var(--ink-2); }
+.vchip small { font-size: 11px; color: var(--muted); }
+.vchip.sel { border-color: var(--accent); background: var(--accent-wash); box-shadow: inset 0 0 0 1px var(--accent); }
+.vflecha { width: 18px; height: 2px; background: var(--line-2); position: relative; flex: none; }
+.vflecha::after { content: ''; position: absolute; right: -2px; top: -4px; border-left: 6px solid var(--line-2); border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
+.v-cab { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.v-cab h3 { font-size: 22px; margin-right: 4px; }
+.pill { font-size: 12px; padding: 2px 9px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line-2); color: var(--ink-2); }
+.pill[data-actual="true"] { background: var(--accent-wash); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.v-card > p { color: var(--ink-2); margin-top: 8px; max-width: 70ch; }
+.v-card h4 { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--muted); margin: 16px 0 6px; font-weight: 500; }
+.v-card ul { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
+.v-arch { display: flex; flex-wrap: wrap; gap: 6px; }
+.v-arch code { font-family: var(--f-mono); font-size: 12px; background: var(--surface-2); border: 1px solid var(--line); padding: 2px 6px; border-radius: 4px; overflow-wrap: anywhere; }
+.v-acciones { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+.primario { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+.visor-bar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-bottom: 10px; }
+.seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: 6px; overflow: hidden; }
+.seg button { border: 0; border-radius: 0; padding: 6px 12px; }
+.seg button + button { border-left: 1px solid var(--line-2); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.mini { display: inline-flex; gap: 6px; align-items: center; font-size: 14px; color: var(--ink-2); cursor: pointer; }
+.mini input { accent-color: var(--accent); margin: 0; }
+/* Fondo de estudio fijo en ambos temas: el aparato es negro y necesita un fondo claro */
+.visor { position: relative; width: 100%; aspect-ratio: 4 / 3; max-height: 520px; border-radius: 8px; overflow: hidden; touch-action: none;
+  background: radial-gradient(ellipse at 50% 35%, #f6f8fa 0%, #dde4ea 65%, #c9d2db 100%); }
+.visor canvas { width: 100%; height: 100%; display: block; cursor: grab; }
+.visor-error { padding: 24px; color: #3b4652; font-size: 14px; }
+.v-visor .field { margin-top: 10px; }
+.v-comp h3 { margin-bottom: 8px; }
+.v-comp .tabla { overflow-x: auto; }
+.v-comp table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 520px; }
+.v-comp th, .v-comp td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.v-comp thead th { font-family: var(--f-mono); font-size: 12px; color: var(--muted); font-weight: 500; }
+.v-comp tbody th { color: var(--ink-2); font-weight: 500; white-space: nowrap; }
+.v-comp .sel { background: var(--accent-wash); }
+.v-comp td.cambia::before { content: '●'; color: var(--accent); font-size: 9px; margin-right: 6px; vertical-align: 2px; }
+
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <p class="eyebrow">Prototipo v0.2 · banco de ensayo virtual</p>
+      <h1>Simulador del uroflujómetro</h1>
+      <p class="lede">Elige un tipo de micción, un diseño y cómo se sujeta. El simulador calcula si desborda y qué volumen marcaría la pantalla con el mismo algoritmo que lleva el firmware.</p>
+    </div>
+    <div class="spec" aria-label="Requisitos de diseño">
+      <span><b>50–800 mL</b>volumen</span>
+      <span><b>1–50 mL/s</b>caudal</span>
+      <span><b>±10 mL</b>error objetivo</span>
+    </div>
+  </header>
+
+  <section class="versiones" id="versiones" aria-labelledby="vH">
+    <div class="v-head">
+      <p class="eyebrow">Control de versiones</p>
+      <h2 id="vH">Versiones del diseño</h2>
+      <p class="lede">Cada cambio del aparato queda registrado aquí con qué cambió y por qué. Elige una versión para verla en 3D o para simularla abajo.</p>
+    </div>
+    <div class="v-grid">
+      <article class="v-card">
+        <div class="v-linea" id="vLinea" role="tablist" aria-label="Versiones"></div>
+        <div class="v-cab"><h3 id="vTitulo"></h3><span class="pill" id="vEstado"></span><span class="pill" id="vFecha"></span></div>
+        <p id="vResumen"></p>
+        <h4>Por qué</h4>
+        <p id="vPorque" style="margin-top:0"></p>
+        <h4 id="vCambiosT">Qué cambia</h4>
+        <ul id="vCambios"></ul>
+        <h4>Archivos de esta versión</h4>
+        <div class="v-arch" id="vArchivos"></div>
+        <div class="v-acciones"><button type="button" id="vSimular" class="primario">Simular esta versión</button></div>
+      </article>
+      <figure class="v-visor">
+        <div class="visor-bar">
+          <div class="seg" role="group" aria-label="Modelo">
+            <button type="button" data-vista="v01">v0.1</button><button type="button" data-vista="v02">v0.2</button><button type="button" data-vista="ambas">Comparar</button>
+          </div>
+          <label class="mini"><input type="checkbox" id="vCorte"> Corte</label>
+          <label class="mini"><input type="checkbox" id="vAgua"> Agua</label>
+          <label class="mini"><input type="checkbox" id="vGirar" checked> Girar</label>
+        </div>
+        <div class="visor" id="visor" role="img" aria-label="Modelo 3D del aparato que se puede girar"></div>
+        <div class="field">
+          <label for="vDespiece">Despiece</label><output id="vDespieceOut" for="vDespiece">0 %</output>
+          <input type="range" id="vDespiece" min="0" max="1" step="0.01" value="0">
+        </div>
+        <p class="hint">Arrastra para girar · rueda o pellizco para acercar · clic derecho para desplazar. El corte quita la mitad delantera.</p>
+      </figure>
+    </div>
+    <div class="v-comp">
+      <h3>Comparativa entre versiones</h3>
+      <div class="tabla"><table id="vTabla"></table></div>
+      <p class="hint">● marca lo que cambia respecto a la versión anterior. La columna resaltada es la versión elegida.</p>
+    </div>
+  </section>
+
+  <main class="grid">
+    <aside class="rail" aria-label="Parámetros del ensayo">
+      <fieldset>
+        <legend>Diseño a probar</legend>
+        <label class="opt"><input type="radio" name="diseno" id="dCompacto" value="compacto" checked><span><b>Compacto portátil (v0.2)</b><small>4 ranuras de 1,5 mm, sensor de presión y acelerómetro; se usa en la mano</small></span></label>
+        <label class="opt"><input type="radio" name="diseno" id="dPropuesto" value="propuesto"><span><b>Cámara + ranura (v0.1)</b><small>Fijo al inodoro: una ranura de 3 mm, tiene que ir vertical</small></span></label>
+        <label class="opt"><input type="radio" name="diseno" id="dOriginal" value="original"><span><b>Sensor en línea</b><small>Como en la imagen: sensor de microflujo de 0,1–150 mL/min</small></span></label>
+        <label class="opt"><input type="radio" name="diseno" id="dTurbina" value="turbina"><span><b>Turbina YF-S201</b><small>Caudalímetro de agua barato, rango 1–30 L/min</small></span></label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Micción</legend>
+        <select id="perfil" aria-label="Tipo de micción"></select>
+        <div class="field">
+          <label for="vol">Volumen orinado</label><output id="volOut" for="vol"></output>
+          <input type="range" id="vol" min="50" max="800" step="10" value="300">
+        </div>
+        <div class="field">
+          <label for="qmax">Caudal máximo (Qmax)</label><output id="qmaxOut" for="qmax"></output>
+          <input type="range" id="qmax" min="3" max="60" step="1" value="25">
+        </div>
+      </fieldset>
+
+      <fieldset id="grpCompacto">
+        <legend>Postura (v0.2)</legend>
+        <div class="field">
+          <label for="incl">Inclinación media</label><output id="inclOut" for="incl"></output>
+          <input type="range" id="incl" min="0" max="35" step="1" value="15">
+        </div>
+        <div class="field">
+          <label for="vaiven">Balanceo de la mano</label><output id="vaivenOut" for="vaiven"></output>
+          <input type="range" id="vaiven" min="0" max="15" step="1" value="5">
+        </div>
+        <div class="field">
+          <label for="errCal">Error de calibración</label><output id="errCalOut" for="errCal"></output>
+          <input type="range" id="errCal" min="0" max="5" step="0.5" value="2">
+        </div>
+        <label class="opt"><input type="checkbox" id="correccion" checked><span><b>Corrección con acelerómetro</b><small>Desactívala para ver qué pasaría sin él</small></span></label>
+      </fieldset>
+
+      <fieldset id="grpParams">
+        <legend>Cámara y sensor</legend>
+        <div class="field">
+          <label for="b">Ancho de la ranura</label><output id="bOut" for="b"></output>
+          <input type="range" id="b" min="1.5" max="6" step="0.5" value="3">
+        </div>
+        <div class="field">
+          <label for="ranuraH">Alto de la ranura</label><output id="ranuraHOut" for="ranuraH"></output>
+          <input type="range" id="ranuraH" min="40" max="85" step="5" value="70">
+        </div>
+        <div class="field">
+          <label for="camD">Diámetro de la cámara</label><output id="camDOut" for="camD"></output>
+          <input type="range" id="camD" min="20" max="50" step="2" value="32">
+        </div>
+        <div class="field">
+          <label for="rhoReal">Densidad real de la orina</label><output id="rhoRealOut" for="rhoReal"></output>
+          <input type="range" id="rhoReal" min="1.000" max="1.035" step="0.005" value="1.015">
+        </div>
+        <div class="field">
+          <label for="ruido">Ruido del sensor</label><output id="ruidoOut" for="ruido"></output>
+          <input type="range" id="ruido" min="0.05" max="1.5" step="0.05" value="0.1">
+        </div>
+        <p class="hint" id="capacidad"></p>
+        <button type="button" id="btnReset">Volver a los valores del prototipo</button>
+      </fieldset>
+    </aside>
+
+    <section class="board" aria-live="polite">
+      <div class="verdict" id="verdict" data-st="good">
+        <div class="ico" id="vIco" aria-hidden="true">✓</div>
+        <div><h2 id="vTitle">Calculando…</h2><p id="vText"></p></div>
+      </div>
+
+      <div class="tiles">
+        <div class="tile"><div class="k">Volumen medido</div><div class="v" id="tVol">–</div><div class="s" id="tVolS"></div></div>
+        <div class="tile"><div class="k" id="tQk">Qmax medido</div><div class="v" id="tQ">–</div><div class="s" id="tQS"></div></div>
+        <div class="tile"><div class="k">Nivel máximo</div><div class="v" id="tH">–</div><div class="s" id="tHS"></div></div>
+        <div class="tile"><div class="k">Derramado fuera</div><div class="v" id="tD">–</div><div class="s" id="tDS"></div></div>
+      </div>
+
+      <div class="bench">
+        <figure>
+          <div class="cap" id="esquemaCap">Corte del aparato</div>
+          <svg id="esquema" viewBox="0 0 300 330" role="img" aria-label="Corte del dispositivo con el nivel de líquido en el instante seleccionado"></svg>
+        </figure>
+        <div class="side">
+          <div>
+            <div class="cap">Pantalla OLED (128 × 64)</div>
+            <div class="oled-shell"><canvas id="oled" width="256" height="128" aria-label="Lo que mostraría la pantalla"></canvas></div>
+          </div>
+          <div class="transport">
+            <button type="button" id="btnPlay">▶ Reproducir</button>
+            <input type="range" id="scrub" min="0" max="100" value="0" aria-label="Instante de la simulación">
+            <span id="tLabel">0,0 s</span>
+          </div>
+          <div class="speed"><label for="speed">Velocidad</label>
+            <select id="speed"><option value="1">×1 (tiempo real)</option><option value="4" selected>×4</option><option value="10">×10</option></select>
+          </div>
+          <dl class="live">
+            <dt>Caudal que entra</dt><dd id="lIn">–</dd>
+            <dt>Caudal que sale</dt><dd id="lOut">–</dd>
+            <dt>Lectura del sensor</dt><dd id="lMed">–</dd>
+            <dt>Nivel</dt><dd id="lH">–</dd>
+          </dl>
+        </div>
+      </div>
+
+      <figure class="chart" id="chQ">
+        <div class="chart-head">
+          <h3>Caudal (mL/s)</h3>
+          <div class="legend"><span style="--c: var(--s1)"><i></i>Real (lo que se orina)</span><span style="--c: var(--s2)"><i></i>Medido por el aparato</span></div>
+        </div>
+        <svg class="plot" id="plotQ" height="220"></svg>
+      </figure>
+
+      <figure class="chart" id="chH">
+        <div class="chart-head">
+          <h3 id="hTitle">Nivel en la cámara (mm)</h3>
+          <div class="legend" id="hLegend"></div>
+        </div>
+        <svg class="plot" id="plotH" height="200"></svg>
+      </figure>
+    </section>
+  </main>
+
+  <section class="notes">
+    <div class="head">
+      <p class="eyebrow">Qué cambia respecto a la imagen</p>
+      <h2>Por qué el concepto original desborda y cómo lo evita el prototipo</h2>
+    </div>
+    <div class="note">
+      <h3>El sensor de la imagen no sirve</h3>
+      <p>El SFM3000 de Sensirion mide gases: es el sensor de los respiradores. Y aunque fuera de líquidos, 150 mL/min son 2,5 mL/s. Un chorro normal va de 15 a 30 mL/s y puede pasar de 40, de diez a veinte veces más.</p>
+    </div>
+    <div class="note">
+      <h3>Lo que desborda es el embudo</h3>
+      <p>Un sensor en línea con un canal estrecho frena el paso. Si entran 25 mL/s y solo salen unos 3, un embudo de 60 mL se llena en pocos segundos y el resto cae fuera. Prueba el diseño «Sensor en línea» arriba.</p>
+    </div>
+    <div class="note">
+      <h3>Portátil y sin ir del todo vertical (v0.2)</h3>
+      <p>Cuatro ranuras de 1,5 mm repartidas alrededor de una cámara de Ø24 mm y un acelerómetro. El firmware calcula cuánto sube el agua en cada ranura según la inclinación y el movimiento de la mano. Funciona hasta unos 25°. La toma de presión va en el centro, protegida del chorro por el tapón del buzo. Sin acelerómetro, a 20° ya se equivoca en unos 20 mL: desactívalo arriba para verlo.</p>
+    </div>
+    <div class="note">
+      <h3>Medir el nivel, no el paso</h3>
+      <p>La orina cae a una cámara con una ranura vertical de 3 mm. A más caudal, más sube el nivel, y la ranura deja salir <span class="formula">Q = ⅔·Cd·b·√(2g)·h^1,5</span>. Un sensor de presión lee el nivel a través de una columna de aire, sin tocar la orina. No hay piezas móviles y la ranura evacua 100 mL/s antes de llegar arriba, el doble del chorro más fuerte previsto.</p>
+    </div>
+  </section>
+
+  <footer>Simulación orientativa con un modelo de vertedero ideal. En la v0.2 incluye el ruido del acelerómetro, 0,5° de desalineación y el error de calibración que elijas, pero no el oleaje del líquido al mover el aparato. La precisión real depende de calibrar el aparato con agua pesada en báscula. No es un dispositivo médico.</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="modelos3d.js"></script>
+<script src="versiones.js"></script>
+<script src="sim.js"></script>
+<script>
+(function () {
+  'use strict';
+  const U = window.Uro;
+  const $ = id => document.getElementById(id);
+  const nf = (x, d = 1) => Number(x).toLocaleString('es-ES', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+
+  // ---------- Controles ----------
+  const sel = $('perfil');
+  Object.entries(U.PERFILES).forEach(([k, p]) => {
+    const o = document.createElement('option');
+    o.value = k; o.textContent = `${p.nombre} · Qmax ${p.qmax} mL/s`;
+    sel.appendChild(o);
+  });
+
+  const campos = {
+    vol: v => `${v} mL`, qmax: v => `${v} mL/s`, b: v => `${nf(v)} mm`, ranuraH: v => `${v} mm`,
+    camD: v => `${v} mm`, rhoReal: v => nf(v, 3), ruido: v => `±${nf(v, 2)} mm`,
+    incl: v => `${v}°`, vaiven: v => `±${v}°`, errCal: v => `${nf(v)} %`,
+  };
+  function pintarSalidas() {
+    Object.entries(campos).forEach(([id, f]) => { $(id + 'Out').textContent = f(parseFloat($(id).value)); });
+  }
+
+  function diseno() { return document.querySelector('input[name=diseno]:checked').value; }
+  function params() {
+    return {
+      b: +$('b').value, ranuraH: +$('ranuraH').value, camD: +$('camD').value,
+      reboseH: Math.min(+$('ranuraH').value + 8, U.POR_DEFECTO.camH - 9),
+      rhoReal: +$('rhoReal').value, ruido: +$('ruido').value,
+      incl: +$('incl').value, vaiven: +$('vaiven').value, errCal: +$('errCal').value,
+      correccion: $('correccion').checked,
+    };
+  }
+
+  // ---------- Estado ----------
+  let res = null, idx = 0, playing = false, lastTs = 0, tPlay = 0;
+
+  function recalcular() {
+    pintarSalidas();
+    const d = diseno();
+    const comp = d === 'compacto';
+    $('grpParams').disabled = d !== 'propuesto' && !comp;
+    $('grpCompacto').disabled = !comp;
+    ['b', 'ranuraH', 'camD'].forEach(id => { $(id).disabled = comp; });
+    const P = params();
+    res = U.simular(d, sel.value, +$('vol').value, +$('qmax').value, P);
+    if (comp) {
+      const C = U.COMPACTO;
+      const qTope = U.aberturaQ(C.ranuraH, C.nRan * C.b, C.ranuraH, 0.62);
+      $('capacidad').innerHTML = `v0.2: ${C.nRan} ranuras de ${nf(C.b)} × ${C.ranuraH} mm en una cámara de Ø${C.camD} mm. Llenas, sacan <b>${nf(qTope, 0)} mL/s</b>. Rebose interno a ${C.reboseH} mm.`;
+    } else {
+      const qTope = U.aberturaQ(P.ranuraH, P.b, P.ranuraH, 0.62);
+      $('capacidad').innerHTML = `Con la ranura llena (${P.ranuraH} mm) salen <b>${nf(qTope, 0)} mL/s</b>. El rebose interno está a ${P.reboseH} mm.`;
+    }
+    $('scrub').max = res.serie.t.length - 1;
+    pintarResumen();
+    dibujarGraficas();
+    stop();
+    setIdx(indiceReposo());
+  }
+
+  function indiceReposo() {
+    const n = res.serie.nivel;
+    let best = 0;
+    for (let i = 1; i < n.length; i++) if (n[i] > n[best] + 1e-6) best = i;
+    return best;
+  }
+
+  // ---------- Resumen ----------
+  function pintarResumen() {
+    const r = res, d = r.diseno;
+    const v = $('verdict');
+    let st, ico, title, text;
+    const err = r.errPct;
+    const comp = d === 'compacto';
+    const errMl = r.vMed - r.vReal;
+    const fueraObjetivo = comp ? Math.abs(errMl) > 10 : Math.abs(err) > 5;
+    if (r.derramado > 0.5) {
+      st = 'crit'; ico = '!';
+      title = `Desborda a los ${nf(r.tDesborde)} s y se derraman ${nf(r.derramado, 0)} mL`;
+      text = `La salida solo deja pasar unos ${nf(r.qSalMax)} mL/s y el chorro llega a ${nf(r.qmaxReal)} mL/s. El embudo se llena y el resto cae fuera.` +
+        (d === 'original' ? ' Además, el sensor satura a 2,5 mL/s.' : '');
+    } else if (r.rebose || r.perdidoRebose > 0.5) {
+      st = 'warn'; ico = '!';
+      title = 'Rebose interno: la medida no es válida';
+      text = `El nivel llegó a ${nf(r.hMax, 0)} mm y pasó por las ventanas de rebose (${nf(r.perdidoRebose, 0)} mL sin medir). No se derrama fuera, pero hay que ensanchar o alargar la ranura.`;
+    } else if (comp && r.inclinado) {
+      st = 'warn'; ico = '!';
+      title = `Demasiado inclinado (hasta ${nf(r.inclMax, 0)}°)`;
+      text = `Por encima de 25° el aparato muestra «INCLINADO» y marca la medida como dudosa. Error en este ensayo: ${errMl >= 0 ? '+' : '−'}${nf(Math.abs(errMl), 0)} mL.`;
+    } else if (r.aviso && (d === 'propuesto' || comp)) {
+      st = 'warn'; ico = '!';
+      title = 'Sin desborde, pero muy cerca del tope de la ranura';
+      text = `El nivel llegó a ${nf(r.hMax, 0)} mm y la ranura mide ${r.nivelAviso} mm. Con un chorro algo más fuerte la medida dejaría de ser válida: ensancha o alarga la ranura.`;
+    } else if (comp && fueraObjetivo) {
+      st = 'warn'; ico = '!';
+      title = `No desborda, pero se sale de ±10 mL (${errMl >= 0 ? '+' : '−'}${nf(Math.abs(errMl), 0)} mL)`;
+      text = r.geo && !r.geo.correccion
+        ? 'Sin el acelerómetro, el firmware no sabe cuánto sube el agua en cada ranura al inclinarse, y el error crece con el ángulo.'
+        : 'Revisa el error de calibración: con un buen calibrado con agua y báscula debería quedar por debajo del 2 %.';
+    } else if (Math.abs(err) > 5) {
+      st = 'warn'; ico = '!';
+      title = `No desborda, pero mide mal (${err > 0 ? '+' : '−'}${nf(Math.abs(err))} %)`;
+      text = d === 'turbina'
+        ? 'El rotor no gira por debajo de 1 L/min (16,7 mL/s): pierde el principio, el final y cualquier chorro débil, que es justo lo que interesa vigilar.'
+        : 'El error supera el 5 %. Revisa el ruido del sensor y la densidad supuesta de la orina.';
+    } else {
+      st = 'good'; ico = '✓';
+      title = comp
+        ? `Sin desborde · error ${errMl >= 0 ? '+' : '−'}${nf(Math.abs(errMl), 0)} mL (${nf(Math.abs(err), 1)} %)`
+        : `Sin desborde · error de volumen ${err >= 0 ? '+' : '−'}${nf(Math.abs(err), 1)} %`;
+      text = comp
+        ? `Dentro del objetivo de ±10 mL. Nivel máximo ${nf(r.hMax, 0)} mm (ranuras de ${r.nivelAviso} mm); inclinación máxima ${nf(r.inclMax, 0)}°.`
+        : d === 'propuesto'
+        ? `Nivel máximo ${nf(r.hMax, 0)} mm. Quedan ${nf(r.nivelRebose - r.hMax, 0)} mm hasta el rebose interno.`
+        : `Nivel máximo en el embudo ${nf(r.hMax, 0)} mm de ${r.limite} mm.`;
+    }
+    v.dataset.st = st; $('vIco').textContent = ico; $('vTitle').textContent = title; $('vText').textContent = text;
+
+    $('tVol').innerHTML = `${nf(r.vMed, 0)}<small>mL</small>`;
+    $('tVolS').innerHTML = comp
+      ? `real ${r.vReal} mL · <span class="${fueraObjetivo ? 'bad' : 'ok'}">${errMl >= 0 ? '+' : '−'}${nf(Math.abs(errMl), 0)} mL</span>`
+      : `real ${r.vReal} mL · <span class="${fueraObjetivo ? 'bad' : 'ok'}">${err >= 0 ? '+' : '−'}${nf(Math.abs(err))} %</span>`;
+    if (comp) {
+      $('tQk').textContent = 'Inclinación máxima';
+      $('tQ').innerHTML = `${nf(r.inclMax, 0)}<small>°</small>`;
+      $('tQS').innerHTML = r.inclinado ? '<span class="bad">pasa de 25°: medida dudosa</span>' : 'aviso a partir de 25°';
+    } else {
+      $('tQk').textContent = 'Qmax medido';
+      $('tQ').innerHTML = `${nf(r.qmaxMed)}<small>mL/s</small>`;
+      $('tQS').textContent = `real ${nf(r.qmaxReal)} mL/s (media de 2 s)`;
+    }
+    $('tH').innerHTML = `${nf(r.hMax, 0)}<small>mm</small>`;
+    $('tHS').textContent = (d === 'propuesto' || comp) ? `rebose interno a ${r.nivelRebose} mm` : `embudo lleno a ${r.limite} mm`;
+    $('tD').innerHTML = `${nf(r.derramado, 0)}<small>mL</small>`;
+    $('tDS').innerHTML = r.derramado > 0.5 ? `<span class="bad">${nf(r.derramado / r.vReal * 100, 0)} % del total</span>` : 'nada cae fuera';
+
+    $('esquemaCap').textContent = comp ? 'Corte del aparato · compacto v0.2' : d === 'propuesto' ? 'Corte del aparato · cámara con ranura' : d === 'original' ? 'Corte del aparato · sensor en línea' : 'Corte del aparato · turbina';
+    $('hTitle').textContent = comp ? 'Nivel en el eje de la cámara (mm)' : d === 'propuesto' ? 'Nivel en la cámara (mm)' : 'Nivel en el embudo (mm)';
+  }
+
+  // ---------- Gráficas ----------
+  function pasoBonito(rango, n) {
+    const bruto = rango / n, p = Math.pow(10, Math.floor(Math.log10(bruto)));
+    const m = bruto / p;
+    return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p;
+  }
+
+  const charts = {};
+  function crearGrafica(svgId, cfg) {
+    const svg = $(svgId), fig = svg.parentElement;
+    const tip = document.createElement('div'); tip.className = 'tip'; tip.hidden = true; fig.appendChild(tip);
+    const ch = { svg, fig, tip, cfg, geo: null };
+    charts[svgId] = ch;
+
+    function puntero(ev) {
+      if (!ch.geo || !res) return;
+      const rect = svg.getBoundingClientRect();
+      const x = ev.clientX - rect.left;
+      const { m, w, xs, tMax } = ch.geo;
+      if (x < m.l || x > w - m.r) { ocultar(); return; }
+      const t = (x - m.l) / (w - m.l - m.r) * tMax;
+      const i = Math.max(0, Math.min(res.serie.t.length - 1, Math.round(t / 0.05)));
+      return i;
+    }
+    function ocultar() { tip.hidden = true; const g = svg.querySelector('.hover'); if (g) g.setAttribute('visibility', 'hidden'); }
+    svg.addEventListener('pointermove', ev => {
+      const i = puntero(ev); if (i == null) return;
+      const { m, xs, ys, h } = ch.geo;
+      const g = svg.querySelector('.hover');
+      const x = xs(res.serie.t[i]);
+      g.setAttribute('visibility', 'visible');
+      g.querySelector('.hover-line').setAttribute('x1', x); g.querySelector('.hover-line').setAttribute('x2', x);
+      const filas = ch.cfg.series().map((s, k) => {
+        const val = s.data[i];
+        const dot = g.querySelectorAll('.dot')[k];
+        dot.setAttribute('cx', x); dot.setAttribute('cy', ys(val));
+        return `<div><span class="sw" style="--c:${s.color}"></span>${s.nombre}: <b>${nf(val)} ${ch.cfg.unidad}</b></div>`;
+      }).join('');
+      tip.innerHTML = `<div style="color:var(--muted)">t = ${nf(res.serie.t[i])} s</div>${filas}`;
+      tip.hidden = false;
+      const fr = ch.fig.getBoundingClientRect(), sr = svg.getBoundingClientRect();
+      const left = sr.left - fr.left + x;
+      const tw = tip.offsetWidth;
+      tip.style.left = (left + 12 + tw > fr.width ? left - tw - 12 : left + 12) + 'px';
+      tip.style.top = (sr.top - fr.top + m.t + 4) + 'px';
+    });
+    svg.addEventListener('pointerleave', ocultar);
+    svg.addEventListener('click', ev => { const i = puntero(ev); if (i != null) { stop(); setIdx(i); } });
+    return ch;
+  }
+
+  function dibujar(ch) {
+    if (!res) return;
+    const { svg, cfg } = ch;
+    const w = Math.max(280, svg.clientWidth || svg.parentElement.clientWidth - 32);
+    const h = +svg.getAttribute('height');
+    const m = { l: 40, r: 14, t: 10, b: 26 };
+    const T = res.serie.t, tMax = T[T.length - 1];
+    const series = cfg.series();
+    let yMax = 0;
+    series.forEach(s => s.data.forEach(v => { if (v > yMax) yMax = v; }));
+    const refs = cfg.refs ? cfg.refs() : [];
+    yMax = cfg.yMax(yMax, refs);
+    const ys = v => m.t + (1 - Math.min(v, yMax) / yMax) * (h - m.t - m.b);
+    const xs = t => m.l + t / tMax * (w - m.l - m.r);
+    ch.geo = { m, w, h, xs, ys, tMax };
+
+    const pasoY = pasoBonito(yMax, 4), pasoX = pasoBonito(tMax, w < 480 ? 4 : 8);
+    let s = `<g class="grid">`;
+    for (let y = pasoY; y <= yMax + 1e-9; y += pasoY) s += `<line x1="${m.l}" x2="${w - m.r}" y1="${ys(y)}" y2="${ys(y)}"/>`;
+    s += `</g>`;
+    for (let y = 0; y <= yMax + 1e-9; y += pasoY) s += `<text x="${m.l - 6}" y="${ys(y) + 4}" text-anchor="end">${nf(y, y % 1 ? 1 : 0)}</text>`;
+    for (let t = 0; t <= tMax + 1e-9; t += pasoX) s += `<text x="${xs(t)}" y="${h - 8}" text-anchor="middle">${nf(t, 0)} s</text>`;
+    s += `<line class="base" x1="${m.l}" x2="${w - m.r}" y1="${ys(0)}" y2="${ys(0)}"/>`;
+
+    refs.forEach(r => {
+      if (r.y > yMax) return;
+      s += `<line class="ref ref-${r.cls}" x1="${m.l}" x2="${w - m.r}" y1="${ys(r.y)}" y2="${ys(r.y)}"/>`;
+      s += `<text class="ref-label" x="${w - m.r - 4}" y="${r.cls === "muted" ? ys(r.y) + 14 : ys(r.y) - 5}" text-anchor="end">${r.label}</text>`;
+    });
+
+    series.forEach(se => {
+      let d = '';
+      const paso = Math.max(1, Math.floor(T.length / (w * 1.5)));
+      for (let i = 0; i < T.length; i += paso) d += (i ? 'L' : 'M') + xs(T[i]).toFixed(1) + ',' + ys(se.data[i]).toFixed(1);
+      if (se.area) s += `<path d="${d}L${xs(T[T.length - 1] || 0)},${ys(0)}L${xs(0)},${ys(0)}Z" style="fill:${se.area}" stroke="none"/>`;
+      s += `<path d="${d}" fill="none" style="stroke:${se.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+    });
+
+    s += `<line class="cursor" x1="0" x2="0" y1="${m.t}" y2="${h - m.b}"/>`;
+    s += `<g class="hover" visibility="hidden"><line class="hover-line" x1="0" x2="0" y1="${m.t}" y2="${h - m.b}"/>`;
+    series.forEach(se => { s += `<circle class="dot" r="4.5" cx="0" cy="0" style="fill:${se.color}"/>`; });
+    s += `</g>`;
+    svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+    svg.setAttribute('width', w);
+    svg.innerHTML = s;
+    moverCursor(ch);
+  }
+
+  function moverCursor(ch) {
+    if (!ch.geo || !res) return;
+    const c = ch.svg.querySelector('.cursor'); if (!c) return;
+    const x = ch.geo.xs(res.serie.t[idx]);
+    c.setAttribute('x1', x); c.setAttribute('x2', x);
+  }
+
+  crearGrafica('plotQ', {
+    unidad: 'mL/s',
+    series: () => [
+      { nombre: 'Real', color: 'var(--s1)', data: res.serie.qin },
+      { nombre: 'Medido', color: 'var(--s2)', data: res.serie.qmed },
+    ],
+    yMax: (m) => Math.max(5, m * 1.12),
+  });
+  crearGrafica('plotH', {
+    unidad: 'mm',
+    series: () => [{ nombre: 'Nivel', color: 'var(--liquid)', data: res.serie.nivel, area: 'var(--liquid-soft)' }],
+    refs: () => (res.diseno === 'propuesto' || res.diseno === 'compacto')
+      ? [
+          { y: res.nivelAviso, label: `ranura llena · ${res.nivelAviso} mm`, cls: 'muted' },
+          { y: res.nivelRebose, label: `rebose interno · ${res.nivelRebose} mm`, cls: 'warn' },
+          { y: res.limite, label: `derrame por el embudo · ${res.limite} mm`, cls: 'crit' },
+        ]
+      : [{ y: res.limite, label: `embudo lleno: derrame · ${res.limite} mm`, cls: 'crit' }],
+    yMax: (m, refs) => {
+      if (res.diseno === 'propuesto' || res.diseno === 'compacto') return Math.max(res.nivelRebose + (res.diseno === 'compacto' ? 8 : 14), m * 1.1);
+      return res.limite * 1.18;
+    },
+  });
+
+  function dibujarGraficas() { Object.values(charts).forEach(dibujar); }
+  let rz = null;
+  new ResizeObserver(() => { clearTimeout(rz); rz = setTimeout(dibujarGraficas, 60); }).observe($('chQ'));
+
+  // ---------- Esquema ----------
+  function esquema(i) {
+    const r = res, S = r.serie, d = r.diseno;
+    const qin = S.qin[i], qsal = S.qsal[i], hNiv = S.nivel[i], derr = S.derr[i];
+    let s = '';
+    const chorro = (x, y0, y1, q) => q > 0.05 ? `<rect class="sv-liq-solid" x="${x - (1 + q / 6) / 2}" y="${y0}" width="${1 + q / 6}" height="${Math.max(0, y1 - y0)}" rx="1"/>` : '';
+
+    if (d === 'compacto') {
+      const C = U.COMPACTO, k = 2.6, F = 240, cx = 150, cy = 180;
+      const th = (S.incl[i] || 0);
+      const X = mm => cx + mm * k, top = F - C.camH * k;
+      const xi0 = X(-C.camD / 2), xi1 = X(C.camD / 2);
+      const hAx = Math.min(S.nivel[i], C.camH);
+      const yc = F - hAx * k, tan = Math.tan(th * Math.PI / 180);
+      const ys = x => yc - (x - cx) * tan;
+      // agua: rectángulo interior recortado por la superficie (Sutherland-Hodgman)
+      const recorta = (pts) => {
+        const out = [], g = p => p[1] - ys(p[0]);
+        for (let j = 0; j < pts.length; j++) {
+          const a = pts[j], b = pts[(j + 1) % pts.length], ga = g(a), gb = g(b);
+          if (ga >= 0) out.push(a);
+          if ((ga >= 0) !== (gb >= 0)) { const t = ga / (ga - gb); out.push([a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])]); }
+        }
+        return out;
+      };
+      let g = '';
+      // embudo acodado y chorro de entrada
+      g += `<polygon class="sv-funnel" points="137,90 82,83 167,23 163,90"/>`;
+      g += `<rect class="sv-funnel" x="137" y="90" width="26" height="${top - 8 - 90}"/>`;
+      if (S.qin[i] > 0.05) g += `<rect class="sv-liq-solid" x="${cx - (1 + S.qin[i] / 8) / 2}" y="40" width="${1 + S.qin[i] / 8}" height="${F - 9.5 * k - 40}" rx="1"/>`;
+      if (hAx > 0.05) {
+        const agua = recorta([[xi0, top], [xi1, top], [xi1, F], [xi0, F]]);
+        if (agua.length > 2) g += `<polygon class="sv-liq" points="${agua.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}"/>`;
+      }
+      // buzo
+      g += `<rect class="sv-wall-2" x="${X(-7)}" y="${top}" width="${1.5 * k}" height="${(C.camH - 13) * k}"/><rect class="sv-wall-2" x="${X(5.5)}" y="${top}" width="${1.5 * k}" height="${(C.camH - 13) * k}"/>`;
+      g += `<rect class="sv-ghost" x="${X(-7)}" y="${F - 13 * k}" width="${14 * k}" height="${3.5 * k}"/><rect class="sv-wall-2" x="${X(-7)}" y="${F - 9.5 * k}" width="${14 * k}" height="${1.5 * k}"/>`;
+      // paredes interiores con ranuras (en este corte se ven dos de las cuatro) y ventanas de rebose
+      const yRan = F - C.ranuraH * k, yV0 = F - (C.reboseH + 5) * k, yV1 = F - C.reboseH * k;
+      [[xi0 - 2 * k], [xi1]].forEach(([x]) => {
+        g += `<rect class="sv-wall" x="${x}" y="${top}" width="${2 * k}" height="${yV0 - top}"/>`;
+        g += `<rect class="sv-wall" x="${x}" y="${yV1}" width="${2 * k}" height="${yRan - yV1}"/>`;
+        g += `<rect class="sv-ghost" x="${x + 0.5}" y="${yRan}" width="${2 * k - 1}" height="${F - yRan}"/>`;
+        g += `<rect class="sv-ghost" x="${x + 0.5}" y="${yV0}" width="${2 * k - 1}" height="${yV1 - yV0}"/>`;
+      });
+      // chorros por las ranuras de cada lado
+      [[xi0 - 2 * k - 4 * k, xi0], [xi1 + 2 * k, xi1]].forEach(([xj, xw]) => {
+        const y0 = Math.max(ys(xw), yRan);
+        if (y0 < F - 0.5) g += `<rect class="sv-liq-solid" x="${xj + 1}" y="${y0}" width="${4 * k - 2}" height="${F + 6 * k - y0}" opacity=".75"/>`;
+      });
+      // camisa exterior, tapa, base, tolva y boquilla
+      g += `<rect class="sv-wall" x="${xi0 - 8 * k}" y="${top - 3 * k}" width="${2 * k}" height="${F + 6 * k - top + 3 * k}"/>`;
+      g += `<rect class="sv-wall" x="${xi1 + 6 * k}" y="${top - 3 * k}" width="${2 * k}" height="${F + 6 * k - top + 3 * k}"/>`;
+      g += `<rect class="sv-wall" x="${xi0 - 8 * k}" y="${top - 3 * k}" width="${(C.camD + 16) * k}" height="${3 * k}"/><rect class="sv-funnel" x="137" y="${top - 3 * k}" width="26" height="${3 * k}"/>`;
+      g += `<rect class="sv-wall" x="${xi0 - 2 * k}" y="${F}" width="${(C.camD + 4) * k}" height="${6 * k}"/>`;
+      g += `<polygon class="sv-wall" points="${xi0 - 8 * k},${F + 6 * k} ${xi0 - 6 * k},${F + 6 * k} ${cx - 5 * k},${F + 18 * k} ${cx - 5 * k},330 ${cx - 7 * k},330 ${cx - 7 * k},${F + 20 * k} ${xi0 - 8 * k},${F + 8 * k}"/>`;
+      g += `<polygon class="sv-wall" points="${xi1 + 8 * k},${F + 6 * k} ${xi1 + 6 * k},${F + 6 * k} ${cx + 5 * k},${F + 18 * k} ${cx + 5 * k},330 ${cx + 7 * k},330 ${cx + 7 * k},${F + 20 * k} ${xi1 + 8 * k},${F + 8 * k}"/>`;
+      if (S.qsal[i] > 0.05) g += `<rect class="sv-liq-solid" x="${cx - 4 * k}" y="${F + 12 * k}" width="${8 * k}" height="${330 - F - 12 * k}" opacity="${Math.min(0.85, 0.3 + S.qsal[i] / 30)}"/>`;
+      // toma de presión y caja de electrónica (sensor + acelerómetro)
+      const xT = cx;   // toma en el centro, bajo el tapón del buzo
+      g += `<path class="sv-tube" d="M${xT},${F + 1} V${F + 3 * k} H${xi1 + 12 * k} V${F - 6}"/><path class="sv-air" d="M${xT},${F + 1} V${F + 3 * k} H${xi1 + 12 * k} V${F - 6}"/>`;
+      g += `<rect class="sv-box" x="${xi1 + 8 * k}" y="${top + 4}" width="${11 * k}" height="${F - 6 - top - 4}" rx="4"/>`;
+      g += `<text class="sv-txt" transform="rotate(-90 ${xi1 + 14 * k} ${(top + F) / 2})" x="${xi1 + 14 * k}" y="${(top + F) / 2 + 4}" text-anchor="middle">sensor + acelerómetro</text>`;
+      s += `<g transform="rotate(${th.toFixed(2)} ${cx} ${cy})">${g}</g>`;
+      // referencias fijas en pantalla
+      s += `<line x1="20" x2="70" y1="300" y2="300" class="sv-line"/><line x1="20" y1="300" x2="${20 + 50 * Math.cos(th * Math.PI / 180)}" y2="${300 + 50 * Math.sin(th * Math.PI / 180)}" class="sv-mark"/>`;
+      s += `<text class="sv-txt-b" x="20" y="322">${nf(th, 0)}°</text>`;
+      if (th > 25) s += `<text class="sv-txt-crit" x="20" y="286">INCLINADO</text>`;
+      s += `<text class="sv-txt-b" x="290" y="20" text-anchor="end">h ${nf(S.nivel[i], 0)} mm</text>`;
+    } else if (d === 'propuesto') {
+      const P = params(), k = 1.6, F = 290, top = F - 95 * k;
+      const xL = 118, xR = 170, yRan = F - P.ranuraH * k, yReb = F - r.nivelRebose * k;
+      // Embudo
+      s += `<polygon class="sv-funnel" points="74,40 196,40 146,118 124,118"/>`;
+      s += `<rect class="sv-funnel" x="124" y="118" width="22" height="14"/>`;
+      // Agua dentro del embudo si la cámara se llena
+      if (hNiv > 95) {
+        const f = Math.min(1, (hNiv - 95) / 60), yW = 118 - f * 78, half = 11 + f * 50;
+        s += `<polygon class="sv-liq" points="${135 - half},${yW} ${135 + half},${yW} 146,118 124,118"/>`;
+      }
+      s += chorro(135, 0, hNiv > 95 ? 118 - Math.min(1, (hNiv - 95) / 60) * 78 : F - Math.min(hNiv, 95) * k, qin);
+      // Agua en la cámara
+      const hc = Math.min(hNiv, 95);
+      if (hc > 0.05) s += `<rect class="sv-liq" x="${xL}" y="${F - hc * k}" width="${xR - xL}" height="${hc * k}"/>`;
+      // Tubo de entrada (buzo)
+      s += `<rect class="sv-wall-2" x="122" y="132" width="2.5" height="${F - 14 - 132}"/><rect class="sv-wall-2" x="145.5" y="132" width="2.5" height="${F - 14 - 132}"/>`;
+      // Paredes de la cámara
+      s += `<rect class="sv-wall" x="112" y="${top - 6}" width="6" height="${F - top + 6}"/>`;
+      s += `<rect class="sv-wall" x="${xR}" y="${top - 6}" width="6" height="${yReb - 12.8 - (top - 6)}"/>`;
+      s += `<rect class="sv-wall" x="${xR}" y="${yReb}" width="6" height="${Math.max(0, yRan - yReb)}"/>`;
+      s += `<rect class="sv-ghost" x="${xR + 0.5}" y="${yRan}" width="5" height="${F - yRan}"/>`;
+      s += `<rect class="sv-ghost" x="${xR + 0.5}" y="${yReb - 12.8}" width="5" height="12.8"/>`;
+      // Tapa, canal de descarga, base y salida
+      s += `<rect class="sv-wall" x="112" y="${top - 6}" width="108" height="6"/>`;
+      s += `<rect class="sv-funnel" x="124" y="${top - 6}" width="22" height="6"/>`;
+      s += `<rect class="sv-wall" x="214" y="${top - 6}" width="6" height="${F - top + 6}"/>`;
+      s += `<rect class="sv-wall-2" x="203" y="${top - 16}" width="5" height="10"/>`;
+      s += `<rect class="sv-wall" x="112" y="${F}" width="64" height="10"/>`;
+      s += `<polygon class="sv-wall" points="176,${F} 182,${F} 194,${F + 22} 194,330 188,330 188,${F + 26} 176,${F + 10}"/>`;
+      s += `<polygon class="sv-wall" points="214,${F} 220,${F} 220,${F + 6} 208,${F + 26} 208,330 202,330 202,${F + 22}"/>`;
+      // Chorro por la ranura y por la salida
+      if (qsal > 0.05) {
+        const wq = 1 + qsal / 5;
+        s += `<rect class="sv-liq-solid" x="178" y="${F - Math.min(hNiv, P.ranuraH) * k}" width="${Math.min(wq, 30)}" height="${Math.min(hNiv, P.ranuraH) * k + 8}" rx="1" opacity="0.8"/>`;
+        s += `<rect class="sv-liq-solid" x="${198 - Math.min(wq, 12) / 2}" y="${F + 18}" width="${Math.min(wq, 12)}" height="${330 - F - 18}" opacity="0.8"/>`;
+      }
+      // Toma de presión y columna de aire hasta el sensor
+      s += `<rect class="sv-box" x="8" y="150" width="56" height="30" rx="4"/>`;
+      s += `<text class="sv-txt" x="36" y="162" text-anchor="middle">sensor de</text><text class="sv-txt" x="36" y="174" text-anchor="middle">presión</text>`;
+      s += `<path class="sv-tube" d="M160,${F + 2} V${F + 6} H36 V180"/>`;
+      s += `<path class="sv-air" d="M160,${F + 2} V${F + 6} H36 V180"/>`;
+      // Cota de nivel
+      if (hc > 0.5) {
+        const y = F - hc * k;
+        s += `<line class="sv-mark" x1="100" x2="110" y1="${y}" y2="${y}"/><line class="sv-mark" x1="105" x2="105" y1="${y}" y2="${F}"/>`;
+        s += `<text class="sv-txt-b" x="100" y="${Math.max(y - 6, 196)}" text-anchor="end">${nf(hNiv, 0)} mm</text>`;
+      }
+      // Etiquetas
+      s += `<text class="sv-txt" x="204" y="30">embudo</text>`;
+      s += `<text class="sv-txt" x="214" y="${top - 20}">respiradero</text>`;
+      s += `<line class="sv-line" x1="224" y1="${yReb - 6}" x2="178" y2="${yReb - 6}"/><text class="sv-txt" x="226" y="${yReb - 2}">rebose</text><text class="sv-txt" x="226" y="${yReb + 10}">interno</text>`;
+      s += `<line class="sv-line" x1="224" y1="${(yRan + F) / 2}" x2="176" y2="${(yRan + F) / 2}"/><text class="sv-txt" x="226" y="${(yRan + F) / 2 - 2}">ranura</text><text class="sv-txt-b" x="226" y="${(yRan + F) / 2 + 11}">${nf(P.b)}×${P.ranuraH}</text>`;
+      s += `<text class="sv-txt" x="44" y="${F + 22}">toma de presión</text>`;
+      s += `<text class="sv-txt" x="214" y="324">salida</text>`;
+      s += `<text class="sv-txt" x="14" y="104">tubo de</text><text class="sv-txt" x="14" y="116">entrada</text><line class="sv-line" x1="60" y1="112" x2="122" y2="150"/>`;
+    } else {
+      // Embudo cónico con sensor en línea
+      const kk = 100 / 60, apex = 160, hN = Math.min(hNiv, 60);
+      s += `<polygon class="sv-funnel" points="80,60 200,60 146,${apex} 134,${apex}"/>`;
+      if (hN > 0.2) {
+        const yW = apex - hN * kk, half = 6 + hN;
+        s += `<polygon class="sv-liq" points="${140 - half},${yW} ${140 + half},${yW} 146,${apex} 134,${apex}"/>`;
+      }
+      s += chorro(140, 0, hN > 0.2 ? apex - hN * kk : apex, qin);
+      const ancho = d === 'original' ? 4 : 10;
+      s += `<rect class="sv-wall" x="${140 - ancho / 2 - 3}" y="${apex}" width="3" height="16"/><rect class="sv-wall" x="${140 + ancho / 2}" y="${apex}" width="3" height="16"/>`;
+      if (qsal > 0.05) s += `<rect class="sv-liq-solid" x="${140 - ancho / 2}" y="${apex}" width="${ancho}" height="${330 - apex}" opacity="${Math.min(0.9, 0.25 + qsal / 30)}"/>`;
+      s += `<rect class="sv-wall" x="106" y="176" width="68" height="44" rx="6"/>`;
+      s += `<text class="sv-txt" x="140" y="196" text-anchor="middle" style="fill:#fff">${d === 'original' ? 'sensor' : 'turbina'}</text>`;
+      s += `<text class="sv-txt" x="140" y="210" text-anchor="middle" style="fill:#fff">${d === 'original' ? '≤ 2,5 mL/s' : '≥ 16,7 mL/s'}</text>`;
+      s += `<rect class="sv-wall" x="${140 - ancho / 2 - 3}" y="220" width="3" height="110"/><rect class="sv-wall" x="${140 + ancho / 2}" y="220" width="3" height="110"/>`;
+      if (derr > 0.1) {
+        [[76, 1], [204, -1]].forEach(([x, sg]) => {
+          s += `<path class="sv-spill" d="M${x + sg * 4},58 q${-sg * 10},30 ${-sg * 12},${120}" style="fill:none;stroke:var(--crit);stroke-width:${Math.min(5, 1 + derr / 8)}"/>`;
+        });
+        s += `<text class="sv-txt-crit" x="20" y="250">derrame</text>`;
+      }
+      s += `<text class="sv-txt" x="206" y="66">embudo 60 mL</text>`;
+      s += `<text class="sv-txt" x="182" y="240">${d === 'original' ? 'canal ~2,5 mm' : 'paso ~7 mm'}</text>`;
+      if (hN > 0.5) s += `<text class="sv-txt-b" x="74" y="${Math.max(apex - hN * kk, 70)}" text-anchor="end">h ${nf(hNiv, 0)} mm</text>`;
+    }
+    $('esquema').innerHTML = s;
+  }
+
+  // ---------- OLED ----------
+  const oled = $('oled'), ox = oled.getContext('2d');
+  function pantalla(i) {
+    const S = res.serie, est = S.estado[i];
+    const ink = css('--oled-ink') || '#bfe8ff';
+    ox.setTransform(2, 0, 0, 2, 0, 0);
+    ox.fillStyle = css('--oled-bg') || '#000'; ox.fillRect(0, 0, 128, 64);
+    ox.fillStyle = ink; ox.strokeStyle = ink; ox.lineWidth = 1;
+    ox.textBaseline = 'alphabetic';
+    // batería
+    ox.strokeRect(111.5, 2.5, 13, 7); ox.fillRect(125, 4, 1.5, 4); ox.fillRect(113, 4, 8, 4);
+    const mono = (px, w = 500) => `${w} ${px}px "IBM Plex Mono", ui-monospace, monospace`;
+    if (est === 'LISTO') {
+      ox.font = mono(8); ox.fillText('LISTO', 2, 9);
+      ox.font = mono(18, 600); ox.fillText('LISTO', 2, 36);
+      ox.font = mono(8); ox.fillText('orina en el embudo', 2, 56);
+    } else if (est === 'MIDIENDO') {
+      ox.font = mono(8); ox.fillText('MIDIENDO', 2, 9);
+      ox.font = mono(24, 600);
+      const v = Math.round(S.vol[i]).toString();
+      ox.fillText(v, 2, 38);
+      const wv = ox.measureText(v).width;
+      ox.font = mono(10); ox.fillText('mL', 6 + wv, 38);
+      ox.font = mono(9);
+      if (res.diseno === 'compacto') {
+        const inc = S.incl[i] || 0;
+        ox.fillText(inc > 25 && (Math.floor(i / 6) % 2 === 0) ? 'INCLINADO' : `incl ${nf(inc, 0)}°`, 2, 58);
+      } else ox.fillText(`${nf(S.qmed[i])} mL/s`, 2, 58);
+      // barra de nivel frente al límite
+      const lim = res.diseno === 'propuesto' ? res.nivelRebose : res.limite;
+      const f = Math.min(1, S.nivel[i] / lim);
+      ox.strokeRect(119.5, 14.5, 6, 47);
+      ox.fillRect(121, 60 - f * 44, 3, f * 44);
+      if (f > 0.85 && (Math.floor(i / 6) % 2 === 0)) { ox.font = mono(8, 600); ox.fillText('LLENO!', 76, 9); }
+    } else {
+      const r = res;
+      ox.font = mono(8); ox.fillText('RESULTADO', 2, 9);
+      ox.font = mono(16, 600); const v = Math.round(S.vol[i]).toString(); ox.fillText(v, 2, 26);
+      const wv = ox.measureText(v).width; ox.font = mono(9); ox.fillText('mL', 5 + wv, 26);
+      ox.font = mono(8);
+      if (r.diseno === 'compacto') ox.fillText(r.inclinado ? 'INCLINADO: dudosa' : `apúntalo · t ${nf(r.tMiccion, 0)}s`, 2, 36);
+      else ox.fillText(`Qmax ${nf(r.qmaxMed)}  t ${nf(r.tMiccion, 0)}s`, 2, 36);
+      // mini curva del caudal medido
+      const y0 = 63, alto = 22, n = S.qmed.length;
+      let qm = 0; for (let j = 0; j < n; j++) qm = Math.max(qm, S.qmed[j]);
+      if (qm > 0) {
+        ox.beginPath();
+        for (let x = 0; x < 128; x++) {
+          const j = Math.floor(x / 128 * n);
+          const y = y0 - S.qmed[j] / qm * alto;
+          x ? ox.lineTo(x + 0.5, y) : ox.moveTo(0.5, y);
+        }
+        ox.stroke();
+      }
+    }
+  }
+
+  // ---------- Reproducción ----------
+  function setIdx(i) {
+    idx = Math.max(0, Math.min(res.serie.t.length - 1, i));
+    $('scrub').value = idx;
+    $('tLabel').textContent = `${nf(res.serie.t[idx])} s`;
+    const S = res.serie;
+    $('lIn').textContent = `${nf(S.qin[idx])} mL/s`;
+    $('lOut').textContent = `${nf(S.qsal[idx])} mL/s`;
+    $('lMed').textContent = `${nf(S.qmed[idx])} mL/s`;
+    $('lH').textContent = res.diseno === 'compacto' ? `${nf(S.nivel[idx])} mm · ${nf(S.incl[idx], 0)}°` : `${nf(S.nivel[idx])} mm`;
+    esquema(idx); pantalla(idx);
+    Object.values(charts).forEach(moverCursor);
+  }
+  function frame(ts) {
+    if (!playing) return;
+    const dt = lastTs ? (ts - lastTs) / 1000 : 0; lastTs = ts;
+    tPlay += dt * +$('speed').value;
+    const i = Math.round(tPlay / 0.05);
+    if (i >= res.serie.t.length - 1) { setIdx(res.serie.t.length - 1); stop(); return; }
+    setIdx(i);
+    requestAnimationFrame(frame);
+  }
+  function play() {
+    if (idx >= res.serie.t.length - 1) idx = 0;
+    playing = true; lastTs = 0; tPlay = res.serie.t[idx];
+    $('btnPlay').textContent = '❚❚ Pausa';
+    requestAnimationFrame(frame);
+  }
+  function stop() { playing = false; $('btnPlay').textContent = '▶ Reproducir'; }
+
+  $('btnPlay').addEventListener('click', () => playing ? stop() : play());
+  $('scrub').addEventListener('input', e => { stop(); setIdx(+e.target.value); });
+
+  // ---------- Eventos ----------
+  sel.addEventListener('change', () => {
+    const p = U.PERFILES[sel.value];
+    $('vol').value = p.vol; $('qmax').value = p.qmax;
+    recalcular();
+  });
+  document.querySelectorAll('input[name=diseno]').forEach(el => el.addEventListener('change', recalcular));
+  $('correccion').addEventListener('change', recalcular);
+  ['vol', 'qmax', 'b', 'ranuraH', 'camD', 'rhoReal', 'ruido', 'incl', 'vaiven', 'errCal'].forEach(id => {
+    $(id).addEventListener('input', pintarSalidas);
+    $(id).addEventListener('change', recalcular);
+  });
+  $('btnReset').addEventListener('click', () => {
+    $('b').value = 3; $('ranuraH').value = 70; $('camD').value = 32; $('rhoReal').value = 1.015; $('ruido').value = 0.1;
+    $('incl').value = 15; $('vaiven').value = 5; $('errCal').value = 2; $('correccion').checked = true;
+    recalcular();
+  });
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => pantalla(idx));
+  new MutationObserver(() => pantalla(idx)).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+  // ---------- Versiones ----------
+  const VERS = window.VERSIONES || [];
+  let vSel = VERS[VERS.length - 1];
+  let visor = null;
+  const fFecha = s => new Date(s + 'T12:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+
+  function pintarVersiones() {
+    if (!vSel) return;
+    const tl = $('vLinea');
+    tl.innerHTML = VERS.map((v, i) => `<button type="button" class="vchip${v === vSel ? ' sel' : ''}" data-i="${i}" role="tab" aria-selected="${v === vSel}"><b>${v.id}</b><span>${v.nombre}</span><small>${fFecha(v.fecha)}${i === VERS.length - 1 ? ' · actual' : ''}</small></button>`).join('<i class="vflecha" aria-hidden="true"></i>');
+    tl.querySelectorAll('.vchip').forEach(b => b.addEventListener('click', () => elegirVersion(VERS[+b.dataset.i], true)));
+    const v = vSel, ant = VERS[VERS.indexOf(v) - 1];
+    $('vTitulo').textContent = `${v.id} · ${v.nombre}`;
+    $('vEstado').textContent = v.estado;
+    $('vEstado').dataset.actual = String(v === VERS[VERS.length - 1]);
+    $('vFecha').textContent = fFecha(v.fecha);
+    $('vResumen').textContent = v.resumen;
+    $('vPorque').textContent = v.porque;
+    $('vCambiosT').textContent = ant ? `Qué cambia respecto a ${ant.id}` : 'Qué cambia respecto al concepto de la imagen';
+    $('vCambios').innerHTML = v.cambios.map(c => `<li>${c}</li>`).join('');
+    $('vArchivos').innerHTML = v.archivos.map(a => `<code>${a}</code>`).join('');
+    const claves = [...new Set(VERS.flatMap(x => Object.keys(x.specs)))];
+    $('vTabla').innerHTML = `<thead><tr><th scope="col">Característica</th>${VERS.map(x => `<th scope="col" class="${x === vSel ? 'sel' : ''}">${x.id} · ${x.nombre}</th>`).join('')}</tr></thead><tbody>` +
+      claves.map(k => `<tr><th scope="row">${k}</th>${VERS.map((x, i) => {
+        const val = x.specs[k] || '—', cambia = i > 0 && val !== (VERS[i - 1].specs[k] || '—');
+        return `<td class="${x === vSel ? 'sel' : ''}${cambia ? ' cambia' : ''}">${val}</td>`;
+      }).join('')}</tr>`).join('') + '</tbody>';
+  }
+
+  function elegirVersion(v, aplicarDiseno) {
+    vSel = v;
+    pintarVersiones();
+    if (visor) visor.ver(v.modelo);
+    if (aplicarDiseno) {
+      const r = document.querySelector(`input[name=diseno][value="${v.diseno}"]`);
+      if (r && !r.checked) { r.checked = true; recalcular(); }
+    }
+  }
+  $('vSimular').addEventListener('click', () => {
+    elegirVersion(vSel, true);
+    document.querySelector('main.grid').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  document.querySelectorAll('input[name=diseno]').forEach(el => el.addEventListener('change', () => {
+    const v = VERS.find(x => x.diseno === el.value);
+    if (v && v !== vSel) elegirVersion(v, false);
+  }));
+
+  // ---------- Visor 3D ----------
+  function crearVisor() {
+    const cont = $('visor');
+    if (!window.THREE || !window.Modelos3D || !THREE.OrbitControls) {
+      cont.innerHTML = '<p class="visor-error">No se ha podido cargar el visor 3D. Comprueba la conexión y recarga la página.</p>';
+      return null;
+    }
+    let renderer;
+    try { renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); }
+    catch (e) { cont.innerHTML = '<p class="visor-error">Este navegador no permite gráficos 3D (WebGL).</p>'; return null; }
+    renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+    renderer.localClippingEnabled = true;
+    cont.appendChild(renderer.domElement);
+    const escena = new THREE.Scene();
+    escena.add(new THREE.HemisphereLight(0xffffff, 0x8899aa, 0.95));
+    const l1 = new THREE.DirectionalLight(0xffffff, 0.9); l1.position.set(220, 320, 260); escena.add(l1);
+    const l2 = new THREE.DirectionalLight(0xffffff, 0.35); l2.position.set(-260, 120, -160); escena.add(l2);
+    const camara = new THREE.PerspectiveCamera(28, 1, 1, 6000);
+    camara.position.set(160, 120, 300);
+    const ctl = new THREE.OrbitControls(camara, renderer.domElement);
+    ctl.enableDamping = true; ctl.dampingFactor = 0.08; ctl.autoRotateSpeed = 1.4;
+    const plano = new THREE.Plane(new THREE.Vector3(0, 0, -1), 1000);
+    const M = { v01: Modelos3D.crear(THREE, 'v01'), v02: Modelos3D.crear(THREE, 'v02') };
+    Object.values(M).forEach(m => { m.materiales.forEach(mt => { mt.clippingPlanes = [plano]; }); escena.add(m.grupo); });
+    const est = { vista: vSel ? vSel.modelo : 'v02', despiece: 0, corte: false, agua: false };
+
+    function encuadrar() {
+      escena.updateMatrixWorld(true);
+      const caja = new THREE.Box3();
+      ['v01', 'v02'].forEach(k => { if (M[k].grupo.visible) M[k].partes.forEach(p => caja.expandByObject(p.obj)); });
+      const c = caja.getCenter(new THREE.Vector3()), t = caja.getSize(new THREE.Vector3());
+      const fov = camara.fov * Math.PI / 180;
+      const d = Math.max(t.y / 2 / Math.tan(fov / 2), Math.max(t.x, t.z) / 2 / Math.tan(fov / 2) / camara.aspect) * 1.12 + Math.max(t.x, t.z) / 2;
+      const dir = camara.position.clone().sub(ctl.target);
+      if (dir.lengthSq() < 1) dir.set(0.5, 0.35, 1);
+      dir.normalize();
+      ctl.target.copy(c);
+      camara.position.copy(c).addScaledVector(dir, d);
+      ctl.minDistance = d * 0.2; ctl.maxDistance = d * 3;
+      ctl.update();
+    }
+    function aplicar(reencuadrar) {
+      ['v01', 'v02'].forEach(k => {
+        const m = M[k];
+        m.grupo.visible = est.vista === 'ambas' || est.vista === k;
+        m.grupo.position.x = est.vista === 'ambas' ? (k === 'v01' ? -80 : 85) : 0;
+        Modelos3D.despiece(m, est.despiece, est.agua || est.corte);
+      });
+      plano.constant = est.corte ? 0 : 1000;
+      document.querySelectorAll('.seg [data-vista]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.vista === est.vista)));
+      if (reencuadrar) encuadrar();
+    }
+    function tam() {
+      const w = cont.clientWidth, h = cont.clientHeight;
+      if (!w || !h) return;
+      renderer.setSize(w, h, false);
+      camara.aspect = w / h;
+      camara.updateProjectionMatrix();
+    }
+    new ResizeObserver(tam).observe(cont);
+    tam();
+    aplicar(true);
+    (function bucle() { ctl.update(); renderer.render(escena, camara); requestAnimationFrame(bucle); })();
+
+    return {
+      ver(v) { est.vista = v; aplicar(true); },
+      set(k, val) {
+        est[k] = val;
+        aplicar(k === 'despiece');
+        if (k === 'corte' && val) {             // mirar de frente para ver la cara cortada
+          const d = camara.position.distanceTo(ctl.target);
+          camara.position.copy(ctl.target).addScaledVector(new THREE.Vector3(0.45, 0.25, 1).normalize(), d);
+        }
+      },
+      girar(on) { ctl.autoRotate = on; },
+    };
+  }
+
+  visor = crearVisor();
+  if (visor) {
+    const quieto = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    $('vGirar').checked = !quieto;
+    visor.girar(!quieto);
+    document.querySelectorAll('.seg [data-vista]').forEach(b => b.addEventListener('click', () => visor.ver(b.dataset.vista)));
+    $('vCorte').addEventListener('change', e => {
+      visor.set('corte', e.target.checked);
+      if (e.target.checked) { $('vGirar').checked = false; visor.girar(false); }
+    });
+    $('vAgua').addEventListener('change', e => visor.set('agua', e.target.checked));
+    $('vGirar').addEventListener('change', e => visor.girar(e.target.checked));
+    $('vDespiece').addEventListener('input', e => {
+      $('vDespieceOut').textContent = `${Math.round(e.target.value * 100)} %`;
+      visor.set('despiece', +e.target.value);
+    });
+  }
+  pintarVersiones();
+
+  recalcular();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { dibujarGraficas(); pantalla(idx); });
+})();
+</script>

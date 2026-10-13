@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Uroflujómetro v0.2 · infografía</title>
+<style>
+  :root {
+    --bg: #edf1f6; --panel: #f8fafc; --line: #d5dde8; --navy: #10294a; --ink: #1f2d3d;
+    --ink2: #4b5b6e; --blue: #2c6db3; --green: #1f9d55; --amber: #e3ac3f;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); }
+  body { font-family: "Segoe UI", "Segoe UI Variable", system-ui, sans-serif; color: var(--ink); }
+  .page {
+    width: 1610px; padding: 22px 20px 24px;
+    display: grid; grid-template-columns: 490px 490px 560px; gap: 18px 20px;
+    grid-template-areas:
+      "hero hero r1"
+      "hero hero r2"
+      "int  int  comp"
+      "dim  uso  comp"
+      "dim  uso  vent";
+  }
+  .panel { background: var(--panel); border: 1.5px solid var(--line); border-radius: 14px; padding: 14px 18px 12px; }
+  .panel h2 { margin: 0 0 4px; font-size: 22px; font-weight: 700; color: var(--navy); }
+  .panel .sub { font-size: 14px; color: var(--ink2); margin: 0 0 6px; }
+  svg { display: block; }
+  svg text { font-family: "Segoe UI", system-ui, sans-serif; }
+
+  .hero { grid-area: hero; padding: 4px 6px 0; }
+  .hero h1 { margin: 0; font-size: 42px; line-height: 1.05; color: var(--navy); font-weight: 800; letter-spacing: -0.3px; }
+  .hero h1 span { font-size: 30px; font-weight: 600; }
+  .hero p { margin: 6px 0 0; font-size: 21px; color: #23364d; }
+  .hero p + p { margin-top: 2px; }
+
+  .r1 { grid-area: r1; } .r2 { grid-area: r2; } .int { grid-area: int; }
+  .comp { grid-area: comp; } .dim { grid-area: dim; } .uso { grid-area: uso; } .vent { grid-area: vent; }
+
+  .comp-row { display: grid; grid-template-columns: 150px 1fr; gap: 14px; align-items: center; padding: 10px 0; border-bottom: 1px solid #e3e9f0; }
+  .comp-row:last-child { border-bottom: 0; }
+  .comp-row b { display: block; font-size: 17px; color: var(--navy); }
+  .comp-row span { display: block; font-size: 15px; color: var(--ink2); line-height: 1.4; }
+
+  .steps { display: grid; gap: 4px; }
+  .step { display: grid; grid-template-columns: 34px 1fr 150px; gap: 12px; align-items: center; min-height: 118px; }
+  .num { width: 30px; height: 30px; border-radius: 50%; background: var(--blue); color: #fff; font-weight: 700; display: grid; place-items: center; font-size: 17px; }
+  .step p { margin: 0; font-size: 16px; line-height: 1.35; }
+
+  .checks { list-style: none; margin: 4px 0 10px; padding: 0; display: grid; gap: 7px; }
+  .checks li { display: grid; grid-template-columns: 24px 1fr; gap: 10px; font-size: 16px; line-height: 1.35; }
+  .checks li::before { content: "✓"; width: 20px; height: 20px; border-radius: 50%; background: var(--green); color: #fff; font-size: 13px; font-weight: 700; display: grid; place-items: center; margin-top: 1px; }
+  .nota { background: #e6eef8; border-radius: 10px; padding: 10px 14px; display: grid; grid-template-columns: 30px 1fr; gap: 12px; }
+  .nota .i { width: 28px; height: 28px; border-radius: 50%; background: var(--blue); color: #fff; font-weight: 700; font-style: italic; font-family: Georgia, serif; display: grid; place-items: center; font-size: 17px; }
+  .nota b { color: var(--navy); font-size: 15px; }
+  .nota p { margin: 2px 0 0; font-size: 14px; color: #34465c; line-height: 1.4; }
+  .peso { font-size: 15px; margin: 4px 0 0; }
+  .peso small { display: block; color: var(--ink2); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="page" id="page">
+
+  <section class="hero">
+    <h1>Medidor portátil con vertedero <span>(prototipo v0.2)</span></h1>
+    <p>Volumen de cada micción (50 – 800 mL) con un objetivo de ±10 mL</p>
+    <p>Se sujeta con la mano, de pie o sentado; la orina pasa y sale directa al inodoro.</p>
+    <svg id="svgHero" width="1000" height="590" viewBox="0 0 1000 590"></svg>
+  </section>
+
+  <section class="panel r1">
+    <h2>Uso de pie y sentado</h2>
+    <svg id="svgPostura" width="520" height="292" viewBox="0 0 520 292"></svg>
+  </section>
+
+  <section class="panel r2">
+    <h2>Corte: cómo mide</h2>
+    <p class="sub">Cada ranura: <b>Q = a/4 · √g · d<sub>i</sub><sup>1,5</sup> / cos α<sub>i</sub></b> &nbsp;·&nbsp; el acelerómetro da la inclinación</p>
+    <svg id="svgCorte" width="520" height="300" viewBox="0 0 520 300"></svg>
+  </section>
+
+  <section class="panel int">
+    <h2>Vista interna (piezas)</h2>
+    <svg id="svgInt" width="960" height="262" viewBox="0 0 960 262"></svg>
+  </section>
+
+  <section class="panel comp">
+    <h2>Componentes principales</h2>
+    <div class="comp-row"><svg id="icSensor" width="150" height="96" viewBox="0 0 150 96"></svg>
+      <div><b>Sensor de presión</b><span>MS4525DO (±1 psi, I2C, 3,3 V)<br>Lee el nivel con ±0,1 mm<br>Obligatorio en esta versión</span></div></div>
+    <div class="comp-row"><svg id="icAcc" width="150" height="96" viewBox="0 0 150 96"></svg>
+      <div><b>Acelerómetro</b><span>LIS3DH (I2C)<br>Mide inclinación y movimiento<br>para corregir cada ranura</span></div></div>
+    <div class="comp-row"><svg id="icXiao" width="150" height="96" viewBox="0 0 150 96"></svg>
+      <div><b>XIAO ESP32-C3</b><span>21 × 17,5 mm, ultra compacta<br>USB-C y carga Li-Po</span></div></div>
+    <div class="comp-row"><svg id="icOled" width="150" height="96" viewBox="0 0 150 96"></svg>
+      <div><b>Pantalla OLED 0,91"</b><span>128 × 32, I2C<br>Volumen en grande para apuntarlo</span></div></div>
+    <div class="comp-row"><svg id="icBat" width="150" height="96" viewBox="0 0 150 96"></svg>
+      <div><b>Batería Li-Po 3,7 V</b><span>200 – 300 mAh<br>Carga por USB-C</span></div></div>
+  </section>
+
+  <section class="panel dim">
+    <h2>Dimensiones y peso</h2>
+    <svg id="svgDim" width="450" height="430" viewBox="0 0 450 430"></svg>
+    <p class="peso"><b>Peso total (aprox.): 60 – 80 g</b><small>(según batería y relleno de impresión)</small></p>
+  </section>
+
+  <section class="panel uso">
+    <h2>Uso</h2>
+    <div class="steps">
+      <div class="step"><div class="num">1</div><p>Enciende y espera a «LISTO» con la cámara vacía.</p><svg id="u1" width="150" height="100" viewBox="0 0 150 100"></svg></div>
+      <div class="step"><div class="num">2</div><p>Sujétalo por la caja: embudo hacia ti y boquilla al inodoro o urinario, sin pasar de 25°.</p><svg id="u2" width="150" height="100" viewBox="0 0 150 100"></svg></div>
+      <div class="step"><div class="num">3</div><p>Orina: la medida empieza sola y el volumen sube en la pantalla.</p><svg id="u3" width="150" height="100" viewBox="0 0 150 100"></svg></div>
+      <div class="step"><div class="num">4</div><p>Apunta el resultado. Sacúdelo, enjuágalo si puedes y guárdalo en la bolsa estanca.</p><svg id="u4" width="150" height="100" viewBox="0 0 150 100"></svg></div>
+    </div>
+  </section>
+
+  <section class="panel vent">
+    <h2>Ventajas de este diseño</h2>
+    <ul class="checks">
+      <li>Cabe en una riñonera: unos 4 × 6 × 8 cm sin el embudo</li>
+      <li>Funciona inclinado hasta 25° y con la mano en movimiento</li>
+      <li>Sin depósito: la orina sale directa al inodoro o al urinario</li>
+      <li>No desborda: las 4 ranuras evacuan 72 mL/s</li>
+      <li>El sensor no toca la orina</li>
+      <li>Guarda las últimas 30 medidas por si se olvida apuntar alguna</li>
+    </ul>
+    <div class="nota"><div class="i">i</div><div><b>Nota</b>
+      <p>Prototipo v0.2. Objetivo de ±10 mL por micción tras calibrar con agua y báscula, pendiente de probar en el aparato real. En casa basta un recolector tipo «sombrero» y una báscula de cocina. No es un producto sanitario.</p></div></div>
+  </section>
+</div>
+<script>
+'use strict';
+// ------------------------------------------------------------ utilidades ----
+const f = n => n.toFixed(1);
+const pd = (pts, close = true) => 'M' + pts.map(p => f(p[0]) + ',' + f(p[1])).join('L') + (close ? 'Z' : '');
+function hull(pts) {
+  const p = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lo = [], up = [];
+  for (const q of p) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); }
+  for (const q of p.reverse()) { while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); }
+  return lo.slice(0, -1).concat(up.slice(0, -1));
+}
+// Proyección oblicua (gabinete): profundidad +Y hacia arriba a la derecha
+function proy(S, OX, OY, YF) {
+  const c = Math.cos(Math.PI / 6) * 0.5, s = Math.sin(Math.PI / 6) * 0.5;
+  return (x, y, z) => [OX + (x + (y - YF) * c) * S, OY - (z + (y - YF) * s) * S];
+}
+const anillo = (P, cx, cy, z, r, n = 90) => Array.from({ length: n }, (_, i) => { const a = i / n * Math.PI * 2; return P(cx + r * Math.cos(a), cy + r * Math.sin(a), z); });
+function caja(P, x0, x1, y0, y1, z0, z1, g) {
+  const F = [P(x0, y0, z0), P(x1, y0, z0), P(x1, y0, z1), P(x0, y0, z1)];
+  const R = [P(x1, y0, z0), P(x1, y1, z0), P(x1, y1, z1), P(x1, y0, z1)];
+  const T = [P(x0, y0, z1), P(x1, y0, z1), P(x1, y1, z1), P(x0, y1, z1)];
+  return `<path d="${pd(R)}" fill="url(#${g}R)"/><path d="${pd(F)}" fill="url(#${g}F)"/><path d="${pd(T)}" fill="url(#${g}T)"/>` +
+    `<path d="${pd([F[3], F[2], R[2]], false)}" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1.2"/>`;
+}
+function cil(P, cx, cy, z0, z1, r, lado, tapa) {
+  const b = anillo(P, cx, cy, z0, r), t = anillo(P, cx, cy, z1, r);
+  return `<path d="${pd(hull(b.concat(t)))}" fill="${lado}"/><path d="${pd(t)}" fill="${tapa}"/>`;
+}
+function etiqueta(x, y, titulo, sub, ancla = 'start', tam = 17) {
+  const dy = tam + 3;
+  return `<text x="${x}" y="${y}" text-anchor="${ancla}" font-size="${tam}" font-weight="700" fill="#10294a">${titulo}</text>` +
+    (sub ? sub.split('|').map((s, i) => `<text x="${x}" y="${y + dy + i * (tam + 1)}" text-anchor="${ancla}" font-size="${tam - 2}" fill="#4b5b6e">${s}</text>`).join('') : '');
+}
+const guia = (x1, y1, x2, y2) => `<path d="M${f(x1)},${f(y1)} L${f(x2)},${f(y2)}" stroke="#1d2b3a" stroke-width="1.3" fill="none"/><circle cx="${f(x2)}" cy="${f(y2)}" r="3" fill="#1d2b3a"/>`;
+
+const DEFS = `
+<defs>
+  <linearGradient id="cuerpoF" x1="0" x2="1"><stop offset="0" stop-color="#2b3036"/><stop offset=".45" stop-color="#3d444c"/><stop offset="1" stop-color="#262a30"/></linearGradient>
+  <linearGradient id="cuerpoR" x1="0" x2="1"><stop offset="0" stop-color="#1c1f23"/><stop offset="1" stop-color="#2a2e34"/></linearGradient>
+  <linearGradient id="cuerpoT" x1="0" x2="1" y1="1" y2="0"><stop offset="0" stop-color="#4b525b"/><stop offset="1" stop-color="#5a626c"/></linearGradient>
+  <linearGradient id="tapaF" x1="0" x2="1"><stop offset="0" stop-color="#33393f"/><stop offset="1" stop-color="#454c55"/></linearGradient>
+  <linearGradient id="tapaR" x1="0" x2="1"><stop offset="0" stop-color="#22262b"/><stop offset="1" stop-color="#2e3238"/></linearGradient>
+  <linearGradient id="tapaT" x1="0" x2="1"><stop offset="0" stop-color="#5a626c"/><stop offset="1" stop-color="#6a737e"/></linearGradient>
+  <linearGradient id="sopF" x1="0" x2="1"><stop offset="0" stop-color="#4a525b"/><stop offset="1" stop-color="#58616b"/></linearGradient>
+  <linearGradient id="sopR" x1="0" x2="1"><stop offset="0" stop-color="#30353b"/><stop offset="1" stop-color="#3a4047"/></linearGradient>
+  <linearGradient id="sopT" x1="0" x2="1"><stop offset="0" stop-color="#6c757f"/><stop offset="1" stop-color="#7b848e"/></linearGradient>
+  <linearGradient id="cilG" x1="0" x2="1"><stop offset="0" stop-color="#22262b"/><stop offset=".35" stop-color="#4a525b"/><stop offset=".6" stop-color="#3a4148"/><stop offset="1" stop-color="#1d2025"/></linearGradient>
+  <linearGradient id="cilT" x1="0" x2="1"><stop offset="0" stop-color="#4f5760"/><stop offset="1" stop-color="#666f79"/></linearGradient>
+  <linearGradient id="embudoG" x1="0" x2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".92"/><stop offset=".3" stop-color="#eef3f7" stop-opacity=".8"/><stop offset=".75" stop-color="#d3dde6" stop-opacity=".82"/><stop offset="1" stop-color="#b9c6d2" stop-opacity=".9"/></linearGradient>
+  <linearGradient id="embudoIn" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#c8d4de"/><stop offset="1" stop-color="#e9eff4"/></linearGradient>
+  <linearGradient id="tuboG" x1="0" x2="1"><stop offset="0" stop-color="#f6e7c4"/><stop offset=".5" stop-color="#e9c77c"/><stop offset="1" stop-color="#d8ad55"/></linearGradient>
+  <linearGradient id="vidrio" x1="0" x2="1"><stop offset="0" stop-color="#cfe0ee" stop-opacity=".55"/><stop offset="1" stop-color="#a9c2d6" stop-opacity=".45"/></linearGradient>
+  <linearGradient id="pcbAzul" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#2b63b3"/><stop offset="1" stop-color="#1b4384"/></linearGradient>
+  <linearGradient id="metal" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#eef1f4"/><stop offset=".5" stop-color="#b8c0c8"/><stop offset="1" stop-color="#dfe4e9"/></linearGradient>
+  <linearGradient id="lipo" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#f1f3f5"/><stop offset=".5" stop-color="#c9cfd6"/><stop offset="1" stop-color="#e6e9ec"/></linearGradient>
+  <linearGradient id="agua" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#f0c45a" stop-opacity=".75"/><stop offset="1" stop-color="#d99a1e" stop-opacity=".85"/></linearGradient>
+  <filter id="sombra" x="-20%" y="-20%" width="140%" height="160%"><feGaussianBlur stdDeviation="9"/></filter>
+</defs>`;
+
+const DEFS2 = DEFS.replace('</defs>', `
+  <linearGradient id="pcbMorado" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#5b3fa8"/><stop offset="1" stop-color="#3b2780"/></linearGradient>
+</defs>`);
+
+// Anillo con orientación libre: centro c, ejes u y v del plano
+function anilloN(P, c, u, v, r, n = 72) {
+  return Array.from({ length: n }, (_, i) => {
+    const a = i / n * Math.PI * 2, ca = Math.cos(a) * r, sa = Math.sin(a) * r;
+    return P(c[0] + ca * u[0] + sa * v[0], c[1] + ca * u[1] + sa * v[1], c[2] + ca * u[2] + sa * v[2]);
+  });
+}
+// Embudo acodado (codo de 30° hacia -X): caño desde z0, radio de curvatura 22 mm
+const CODO = 30, RB = 22;
+const posCodo = (a, z0) => { const r = a * Math.PI / 180; return [-RB + RB * Math.cos(r), 0, z0 + RB * Math.sin(r)]; };
+const ejeCodo = a => { const r = a * Math.PI / 180; return [Math.cos(r), 0, Math.sin(r)]; };       // eje u del anillo
+const rumbo = a => { const r = a * Math.PI / 180; return [-Math.sin(r), 0, Math.cos(r)]; };
+
+// Silueta 2D del embudo acodado en mm (x, z), para vistas de frente
+function siluetaEmbudo(z0) {
+  const der = [], izq = [];
+  for (let a = 0; a <= CODO; a += 5) {
+    const c = posCodo(a, z0), u = ejeCodo(a);
+    der.push([c[0] + 8.75 * u[0], c[2] + 8.75 * u[2]]);
+    izq.unshift([c[0] - 8.75 * u[0], c[2] - 8.75 * u[2]]);
+  }
+  const c = posCodo(CODO, z0), h = rumbo(CODO), u = ejeCodo(CODO);
+  const m = [c[0] + 40 * h[0], c[2] + 40 * h[2]];
+  return [[-8.75, z0 - 4], [8.75, z0 - 4]].concat(der, [[m[0] + 39 * u[0], m[1] + 39 * u[2]], [m[0] - 39 * u[0], m[1] - 39 * u[2]]], izq);
+}
+
+// Elipse de la boca para las vistas de perfil (da sensación de volumen)
+function bocaEmbudo(z0) {
+  const c = posCodo(CODO, z0), h = rumbo(CODO);
+  const m = [c[0] + 40 * h[0], c[2] + 40 * h[2]];
+  return `<ellipse cx="${m[0].toFixed(1)}" cy="${m[1].toFixed(1)}" rx="39" ry="7" transform="rotate(${CODO} ${m[0].toFixed(1)} ${m[1].toFixed(1)})" fill="#e3eaf0" stroke="#a9b8c6" stroke-width="1"/>`;
+}
+
+// Aparato visto de frente en mm (z hacia arriba); se coloca con transform
+function glifo(pantalla = '287') {
+  const p = pts => pts.map(q => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' ');
+  return `<polygon points="-20,-6 20,-6 6.5,-22 -6.5,-22" fill="#1d2025"/>` +
+    `<rect x="-6.5" y="-28" width="13" height="6" fill="#2b3036"/>` +
+    `<rect x="-20" y="48" width="40" height="3" fill="#555d66"/>` +
+    `<rect x="-11" y="51" width="22" height="12" fill="#3d444c"/>` +
+    `<polygon points="${p(siluetaEmbudo(67))}" fill="url(#embudoG)" stroke="#a9b8c6" stroke-width="1"/>` + bocaEmbudo(67) +
+    `<rect x="-22" y="-10" width="44" height="58" rx="2" fill="url(#cuerpoF)"/>` +
+    `<rect x="-12" y="36" width="24" height="8" rx="1" fill="#03070b"/>` +
+    `<circle cx="0" cy="24" r="3.5" fill="#1a1d21" stroke="#5c646c" stroke-width="1"/>` +
+    (pantalla ? `<text x="-10" y="-38" transform="scale(1,-1)" font-size="6" font-weight="700" fill="#cfefff">${pantalla} mL</text>` : '');
+}
+
+// ----------------------------------------------------------------- portada --
+(function hero() {
+  const S = 3.0, P = proy(S, 470, 452, -37);
+  let s = DEFS2;
+  s += `<ellipse cx="${f(P(0, 0, -28)[0])}" cy="${f(P(0, 0, -28)[1] + 30)}" rx="110" ry="14" fill="#9fb0c3" opacity=".4" filter="url(#sombra)"/>`;
+  // chorro de salida
+  const b0 = P(0, 0, -28);
+  s += `<path d="M${f(b0[0])},${f(b0[1])} q3,40 -2,96" stroke="#e0a92c" stroke-width="9" fill="none" opacity=".85" stroke-linecap="round"/>`;
+  // tolva y boquilla
+  s += `<path d="${pd(hull(anillo(P, 0, 0, -6, 20).concat(anillo(P, 0, 0, -22, 6.5))))}" fill="url(#cilG)"/>`;
+  s += cil(P, 0, 0, -28, -22, 6.5, 'url(#cilG)', '#3a4148');
+  // camisa con la cámara dentro
+  s += cil(P, 0, 0, -6, 48, 20, 'url(#cilG)', 'url(#cilT)');
+  // tapa, respiradero, cuello
+  s += cil(P, 0, 0, 48, 51, 20, 'url(#cilG)', 'url(#tapaT)');
+  const rx = 16 * Math.cos(135 * Math.PI / 180), ry = 16 * Math.sin(135 * Math.PI / 180);
+  s += cil(P, rx, ry, 51, 55, 3, 'url(#cilG)', '#555d66') + `<path d="${pd(anillo(P, rx, ry, 55, 1.3, 30))}" fill="#111"/>`;
+  s += cil(P, 0, 0, 51, 63, 11, 'url(#cilG)', '#4f5760');
+  // embudo acodado: gira libre en el cuello; aquí se dibuja con el codo hacia delante-izquierda
+  const z0 = 67, bd = [-Math.SQRT1_2, -Math.SQRT1_2, 0], vv = [Math.SQRT1_2, -Math.SQRT1_2, 0];
+  const rad = a => a * Math.PI / 180;
+  const pos3 = a => { const k = RB * (1 - Math.cos(rad(a))); return [bd[0] * k, bd[1] * k, z0 + RB * Math.sin(rad(a))]; };
+  const u3 = a => [bd[0] * Math.cos(rad(a)), bd[1] * Math.cos(rad(a)), -Math.sin(rad(a))];
+  const h3 = a => [bd[0] * Math.sin(rad(a)), bd[1] * Math.sin(rad(a)), Math.cos(rad(a))];
+  s += cil(P, 0, 0, 63, z0, 8.75, 'url(#embudoG)', '#e3eaf0');
+  for (let a = 0; a < CODO; a += 5) {
+    const r1 = anilloN(P, pos3(a), u3(a), vv, 8.75), r2 = anilloN(P, pos3(a + 5), u3(a + 5), vv, 8.75);
+    s += `<path d="${pd(hull(r1.concat(r2)))}" fill="url(#embudoG)" stroke="#b3c2cf" stroke-width=".6"/>`;
+  }
+  const c30 = pos3(CODO), h30 = h3(CODO), u30 = u3(CODO);
+  const boca = [0, 1, 2].map(i => c30[i] + 40 * h30[i]);
+  const anB = anilloN(P, c30, u30, vv, 8.75), anM = anilloN(P, boca, u30, vv, 39), anI = anilloN(P, boca, u30, vv, 37.4);
+  s += `<path d="${pd(hull(anB.concat(anM)))}" fill="url(#embudoG)" stroke="#a9b8c6" stroke-width="1.2"/>`;
+  s += `<path d="${pd(anM)}" fill="#e3eaf0" stroke="#a9b8c6" stroke-width="1.2"/><path d="${pd(anI)}" fill="url(#embudoIn)"/>`;
+  const en = (t, r) => P(...[0, 1, 2].map(i => c30[i] + t * (boca[i] - c30[i]) + r * (0.85 * vv[i] - 0.5 * u30[i])));
+  const hl = [en(0.92, 33), en(0.5, 22), en(0.08, 9)];
+  s += `<path d="M${f(hl[0][0])},${f(hl[0][1])} Q${f(hl[1][0])},${f(hl[1][1])} ${f(hl[2][0])},${f(hl[2][1])}" stroke="#fff" stroke-width="4" fill="none" opacity=".85" stroke-linecap="round"/>`;
+  // chorro de entrada, cayendo al centro de la boca
+  const e1 = P(...boca), e0 = [e1[0] + 70, e1[1] - 120];
+  s += `<path d="M${f(e0[0])},${f(e0[1])} Q${f(e1[0] + 10)},${f(e1[1] - 90)} ${f(e1[0])},${f(e1[1])}" stroke="#e0a92c" stroke-width="5" fill="none" opacity=".8" stroke-linecap="round"/>`;
+  const bocaIzq = anM.reduce((m, q) => q[0] < m[0] ? q : m, anM[0]);
+  // caja de electrónica (delante)
+  s += caja(P, -22, 22, -37, -19, -10, 48, 'cuerpo');
+  s += caja(P, -22, 22, -37, -20.5, 48, 50, 'tapa');
+  const o0 = P(-13.5, -37, 45.5), o1 = P(13.5, -37, 34.5), v0 = P(-12, -37, 44), v1 = P(12, -37, 36);
+  s += `<rect x="${f(o0[0])}" y="${f(o0[1])}" width="${f(o1[0] - o0[0])}" height="${f(o1[1] - o0[1])}" rx="3" fill="#0d1014" stroke="#51585f"/>`;
+  s += `<rect x="${f(v0[0])}" y="${f(v0[1])}" width="${f(v1[0] - v0[0])}" height="${f(v1[1] - v0[1])}" rx="1.5" fill="#03070b"/>`;
+  s += `<text x="${f(v0[0] + 6)}" y="${f(v1[1] - 5)}" font-size="16" font-weight="600" fill="#cfefff">287</text><text x="${f(v0[0] + 40)}" y="${f(v1[1] - 5)}" font-size="9" fill="#cfefff">mL</text>`;
+  const bt = P(0, -37, 24);
+  s += `<circle cx="${f(bt[0])}" cy="${f(bt[1])}" r="11" fill="#1a1d21" stroke="#5c646c" stroke-width="1.5"/><circle cx="${f(bt[0])}" cy="${f(bt[1])}" r="7" fill="#2b3036"/>`;
+
+  // etiquetas
+  s += etiqueta(40, 60, 'Embudo acodado', 'sirve de pie y sentado|codo de 30°, extraíble');
+  s += guia(230, 66, bocaIzq[0] + 2, bocaIzq[1]);
+  s += etiqueta(40, 300, 'Botón', 'encendido / cero');
+  s += guia(178, 306, bt[0] - 12, bt[1]);
+  s += etiqueta(700, 96, 'Respiradero', 'la camisa queda a presión|atmosférica');
+  s += guia(694, 102, ...P(rx, ry, 54));
+  s += etiqueta(700, 196, 'Cámara de 4 ranuras', 'dentro de la camisa exterior');
+  s += guia(694, 202, ...P(20, 6, 30));
+  s += etiqueta(700, 300, 'Caja de electrónica', 'sensor + acelerómetro|sirve de mango');
+  s += guia(694, 306, ...P(22, -30, 12));
+  s += etiqueta(700, 440, 'Boquilla', 'directa al inodoro|o al urinario');
+  s += guia(694, 446, P(0, 0, -26)[0] + 18, P(0, 0, -26)[1]);
+
+  // ampliación de la pantalla (128 × 32)
+  const zx = 40, zy = 380, zw = 290, zh = 100;
+  s += guia(zx + zw, zy + 30, o0[0], (o0[1] + o1[1]) / 2);
+  s += `<rect x="${zx}" y="${zy}" width="${zw}" height="${zh}" rx="14" fill="#1f2328"/><rect x="${zx + 10}" y="${zy + 10}" width="${zw - 20}" height="${zh - 20}" rx="5" fill="#03070b"/>`;
+  s += `<text x="${zx + 24}" y="${zy + 68}" font-size="46" font-weight="600" fill="#cfefff">287</text><text x="${zx + 118}" y="${zy + 68}" font-size="17" fill="#cfefff">mL</text>`;
+  s += `<rect x="${zx + zw - 50}" y="${zy + 20}" width="22" height="11" fill="none" stroke="#cfefff" stroke-width="1.4"/><rect x="${zx + zw - 27}" y="${zy + 23}" width="3" height="5" fill="#cfefff"/><rect x="${zx + zw - 48}" y="${zy + 22}" width="15" height="7" fill="#cfefff"/>`;
+  s += `<text x="${zx + zw - 22}" y="${zy + 66}" text-anchor="end" font-size="15" fill="#cfefff">apuntar</text>`;
+  s += `<text x="${zx}" y="${zy - 10}" font-size="17" font-weight="700" fill="#10294a">Pantalla OLED <tspan font-weight="400" font-size="15" fill="#4b5b6e">(resultado)</tspan></text>`;
+
+  // insignias
+  s += `<g transform="translate(680,516)"><rect width="305" height="60" rx="12" fill="#e5f4ec" stroke="#9fd3b5"/>` +
+       `<g transform="translate(28,30)"><path d="M-12,10 h24" stroke="#14532d" stroke-width="2"/><path d="M-6,10 l10,-20" stroke="#1f9d55" stroke-width="4" stroke-linecap="round"/><path d="M8,10 a14,14 0 0 0 -3,-9" stroke="#14532d" stroke-width="1.5" fill="none"/></g>` +
+       `<text x="54" y="26" font-size="16" font-weight="700" fill="#14532d">Funciona inclinado</text>` +
+       `<text x="54" y="45" font-size="14" fill="#2f6b48">hasta 25°, con la mano en movimiento</text></g>`;
+  document.getElementById('svgHero').innerHTML = s;
+})();
+
+// --------------------------------------------------------- de pie y sentado --
+(function postura() {
+  let s = DEFS2;
+  const inodoro = (dx, conAsiento) =>
+    `<g transform="translate(${dx},0)">` +
+    `<path d="M20,150 H58 V160 Q60,214 96,246 Q112,258 140,258 Q176,258 196,226 Q210,200 212,160 V150 H232 V162 Q232,236 200,262 Q180,276 140,276 Q84,274 60,240 Q36,206 34,162 L30,150 Z" fill="#dfe5ec" stroke="#9aa8b8" stroke-width="1.5"/>` +
+    `<path d="M58,160 Q60,214 96,246 Q112,258 140,258 Q176,258 196,226 Q210,200 212,160 Z" fill="#f3f6f9" stroke="#9aa8b8" stroke-width="1.5"/>` +
+    `<path d="M92,242 Q112,258 140,258 Q172,258 190,236 Z" fill="#cfe3f3"/>` +
+    (conAsiento ? `<rect x="14" y="140" width="226" height="9" rx="4" fill="#c9d3dd" stroke="#9aa8b8"/>` : '') + `</g>`;
+  // De pie: aparato sobre la taza, ligeramente inclinado
+  s += inodoro(0, false);
+  s += `<path d="M66,50 Q108,42 126,66" stroke="#e0a92c" stroke-width="4" fill="none" stroke-linecap="round" opacity=".85"/>`;
+  s += `<g transform="translate(132,160) rotate(10) scale(0.85,-0.85)">${glifo('')}</g>`;
+  s += `<path d="M137,188 q2,30 -2,62" stroke="#e0a92c" stroke-width="4" fill="none" opacity=".85" stroke-linecap="round"/>`;
+  s += `<text x="126" y="288" text-anchor="middle" font-size="15" font-weight="700" fill="#10294a">De pie</text>`;
+  // Sentado: entre las piernas, en la parte delantera de la taza, bajo el asiento
+  s += inodoro(266, true);
+  s += `<path d="M470,58 Q450,86 430,104" stroke="#e0a92c" stroke-width="4" fill="none" stroke-linecap="round" opacity=".85"/>`;
+  s += `<g transform="translate(412,214) rotate(-18) scale(0.72,-0.72)">${glifo('')}</g>`;
+  s += `<path d="M410,236 q-2,12 6,22" stroke="#e0a92c" stroke-width="4" fill="none" opacity=".85" stroke-linecap="round"/>`;
+  s += `<text x="392" y="288" text-anchor="middle" font-size="15" font-weight="700" fill="#10294a">Sentado</text>`;
+  // notas
+  s += `<text x="8" y="22" font-size="13" fill="#4b5b6e">Embudo hacia ti,</text><text x="8" y="38" font-size="13" fill="#4b5b6e">boquilla a la taza</text>`;
+  s += `<text x="300" y="22" font-size="13" fill="#4b5b6e">En la parte delantera,</text><text x="300" y="38" font-size="13" fill="#4b5b6e">bajo el asiento</text>`;
+  s += `<g transform="translate(232,74)"><rect width="66" height="44" rx="8" fill="#fff4dc" stroke="#e5c27a"/><text x="33" y="20" text-anchor="middle" font-size="15" font-weight="700" fill="#7a4d00">≤ 25°</text><text x="33" y="36" text-anchor="middle" font-size="11" fill="#7a4d00">si no, avisa</text></g>`;
+  document.getElementById('svgPostura').innerHTML = s;
+})();
+
+// ------------------------------------------------------------------- corte --
+(function corte() {
+  const k = 2.35, F = 226, cx = 122, cy = 160, th = 12;
+  const X = mm => cx + mm * k, top = F - 48 * k;
+  const xi0 = X(-12), xi1 = X(12);
+  const hAx = 20, yc = F - hAx * k, tan = Math.tan(th * Math.PI / 180);
+  const ys = x => yc - (x - cx) * tan;
+  const rot = (x, y) => { const a = th * Math.PI / 180; return [cx + (x - cx) * Math.cos(a) - (y - cy) * Math.sin(a), cy + (x - cx) * Math.sin(a) + (y - cy) * Math.cos(a)]; };
+  const recorta = pts => {
+    const out = [], g = p => p[1] - ys(p[0]);
+    for (let j = 0; j < pts.length; j++) {
+      const a = pts[j], b = pts[(j + 1) % pts.length], ga = g(a), gb = g(b);
+      if (ga >= 0) out.push(a);
+      if ((ga >= 0) !== (gb >= 0)) { const t = ga / (ga - gb); out.push([a[0] + t * (b[0] - a[0]), a[1] + t * (b[1] - a[1])]); }
+    }
+    return out;
+  };
+  let g = '';
+  const w = '#2b3036', w2 = '#59626c';
+  // embudo acodado (simplificado) y chorro
+  g += `<polygon points="${X(-8.75)},${top - 8} ${X(-26)},${top - 64} ${X(10)},${top - 82} ${X(8.75)},${top - 8}" fill="url(#embudoG)" stroke="#a9b8c6" stroke-width="1.2"/>`;
+  g += `<rect x="${cx - 3}" y="${top - 70}" width="6" height="${F - 9.5 * k - (top - 70)}" rx="2" fill="#e0a92c" opacity=".85"/>`;
+  // agua
+  const agua = recorta([[xi0, top], [xi1, top], [xi1, F], [xi0, F]]);
+  g += `<polygon points="${agua.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" fill="url(#agua)" opacity=".7"/>`;
+  // buzo con tapón y ventanas
+  g += `<rect x="${X(-7)}" y="${top}" width="${1.5 * k}" height="${35 * k}" fill="${w2}"/><rect x="${X(5.5)}" y="${top}" width="${1.5 * k}" height="${35 * k}" fill="${w2}"/>`;
+  g += `<rect x="${X(-7)}" y="${F - 12.5 * k}" width="${14 * k}" height="${5 * k}" fill="none" stroke="#7d8894" stroke-dasharray="3 3"/>`;
+  g += `<rect x="${X(-7)}" y="${F - 7.5 * k}" width="${14 * k}" height="${1.5 * k}" fill="${w2}"/>`;
+  // paredes interiores con ranuras y ventanas de rebose
+  const yRan = F - 36 * k, yV0 = F - 45 * k, yV1 = F - 40 * k;
+  [xi0 - 2 * k, xi1].forEach(x => {
+    g += `<rect x="${x}" y="${top}" width="${2 * k}" height="${yV0 - top}" fill="${w}"/><rect x="${x}" y="${yV1}" width="${2 * k}" height="${yRan - yV1}" fill="${w}"/>`;
+    g += `<rect x="${x + 0.5}" y="${yRan}" width="${2 * k - 1}" height="${F - yRan}" fill="none" stroke="#7d8894" stroke-dasharray="3 3"/>`;
+  });
+  [[xi0 - 6 * k, xi0], [xi1 + 2 * k, xi1]].forEach(([xj, xw]) => {
+    const y0 = Math.max(ys(xw), yRan);
+    if (y0 < F) g += `<rect x="${xj + 1}" y="${y0}" width="${4 * k - 2}" height="${F + 6 * k - y0}" fill="#e0a92c" opacity=".8"/>`;
+  });
+  // camisa, tapa, base, tolva y boquilla
+  g += `<rect x="${xi0 - 8 * k}" y="${top - 3 * k}" width="${2 * k}" height="${F + 6 * k - top + 3 * k}" fill="${w}"/><rect x="${xi1 + 6 * k}" y="${top - 3 * k}" width="${2 * k}" height="${F + 6 * k - top + 3 * k}" fill="${w}"/>`;
+  g += `<rect x="${xi0 - 8 * k}" y="${top - 3 * k}" width="${40 * k}" height="${3 * k}" fill="#3d444c"/><rect x="${X(-9)}" y="${top - 3 * k}" width="${18 * k}" height="${3 * k}" fill="#e7edf2"/>`;
+  g += `<rect x="${xi0 - 2 * k}" y="${F}" width="${28 * k}" height="${6 * k}" fill="${w}"/>`;
+  g += `<polygon points="${xi0 - 8 * k},${F + 6 * k} ${xi0 - 6 * k},${F + 6 * k} ${cx - 5 * k},${F + 18 * k} ${cx - 5 * k},${F + 26 * k} ${cx - 7 * k},${F + 26 * k} ${cx - 7 * k},${F + 20 * k} ${xi0 - 8 * k},${F + 8 * k}" fill="${w}"/>`;
+  g += `<polygon points="${xi1 + 8 * k},${F + 6 * k} ${xi1 + 6 * k},${F + 6 * k} ${cx + 5 * k},${F + 18 * k} ${cx + 5 * k},${F + 26 * k} ${cx + 7 * k},${F + 26 * k} ${cx + 7 * k},${F + 20 * k} ${xi1 + 8 * k},${F + 8 * k}" fill="${w}"/>`;
+  g += `<rect x="${cx - 4 * k}" y="${F + 12 * k}" width="${8 * k}" height="${14 * k}" fill="#e0a92c" opacity=".7"/>`;
+  // toma central, columna de aire y caja
+  g += `<path d="M${cx},${F + 1} V${F + 3 * k} H${xi1 + 12 * k} V${F - 6}" stroke="${w2}" stroke-width="3.5" fill="none" stroke-linejoin="round"/>`;
+  g += `<path d="M${cx},${F + 1} V${F + 3 * k} H${xi1 + 12 * k} V${F - 6}" stroke="#2c6db3" stroke-width="1.6" stroke-dasharray="3 3" fill="none"/>`;
+  g += `<rect x="${xi1 + 8 * k}" y="${top + 4}" width="${11 * k}" height="${F - 6 - top - 4}" rx="4" fill="#eef2f6" stroke="${w2}" stroke-width="1.5"/>`;
+  g += `<text transform="rotate(-90 ${xi1 + 14 * k} ${(top + F) / 2})" x="${xi1 + 14 * k}" y="${(top + F) / 2 + 4}" text-anchor="middle" font-size="11" fill="#1f2d3d">sensor + acelerómetro</text>`;
+  let s = DEFS2 + `<g transform="rotate(${th} ${cx} ${cy})">${g}</g>`;
+  s += `<path d="M14,286 h44 M14,286 l${44 * Math.cos(th * Math.PI / 180)},${44 * Math.sin(th * Math.PI / 180)}" stroke="#1f2d3d" stroke-width="1.2"/><text x="64" y="292" font-size="12" fill="#1f2d3d">${th}°</text>`;
+  // etiquetas (los puntos se giran igual que el dibujo)
+  const L = 300;
+  const T = (x, y) => rot(x, y);
+  s += etiqueta(L, 26, 'Embudo acodado', '', 'start', 15);                         s += guia(L - 4, 22, ...T(X(0), top - 60));
+  s += etiqueta(L, 66, 'Rebose interno (40 mm)', 'si se pasa, va a la salida', 'start', 15); s += guia(L - 4, 62, ...T(xi1 + k, yV0 + 6));
+  s += etiqueta(L, 110, 'Buzo con tapón', 'reparte el chorro hacia los lados', 'start', 15); s += guia(L - 4, 106, ...T(X(6), F - 20 * k));
+  s += etiqueta(L, 154, 'Ranuras 1,5 × 36 mm (×4)', 'más caudal = más nivel', 'start', 15); s += guia(L - 4, 150, ...T(xi1 + k, F - 10 * k));
+  s += etiqueta(L, 198, 'Camisa de descarga', 'lleva lo que sale a la boquilla', 'start', 15); s += guia(L - 4, 194, ...T(xi1 + 7 * k, F - 30 * k));
+  s += etiqueta(L, 242, 'Toma central', 'columna de aire: el sensor|no toca la orina', 'start', 15); s += guia(L - 4, 238, ...T(cx + 3, F + 3 * k));
+  document.getElementById('svgCorte').innerHTML = s;
+})();
+
+// ----------------------------------------------------------- vista interna --
+(function interna() {
+  let s = DEFS2;
+  const flecha = x => `<path d="M${x},150 h24 m-7,-6 l7,6 l-7,6" stroke="#7d8ea3" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const tit = (x, t, sub) => `<text x="${x}" y="24" text-anchor="middle" font-size="16" font-weight="700" fill="#10294a">${t}</text>` +
+    sub.split('|').map((l, i) => `<text x="${x}" y="${43 + i * 16}" text-anchor="middle" font-size="13" fill="#4b5b6e">${l}</text>`).join('');
+  const p = pts => pts.map(q => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' ');
+  // 1 embudo acodado
+  s += tit(78, 'Embudo acodado', 'PETG o TPU|boca Ø75 mm');
+  s += `<g transform="translate(96,244) scale(1.25,-1.25)"><polygon points="${p(siluetaEmbudo(67).map(q => [q[0], q[1] - 63]))}" fill="url(#embudoG)" stroke="#a9b8c6" stroke-width=".8"/><g transform="translate(0,-63)">${bocaEmbudo(67)}</g></g>`;
+  s += flecha(150);
+  // 2 tapa
+  s += tit(232, 'Tapa', 'cuello, respiradero|y marca');
+  s += `<rect x="196" y="176" width="72" height="7" rx="2" fill="url(#tapaF)"/><rect x="218" y="146" width="28" height="30" fill="url(#cilG)"/><ellipse cx="232" cy="146" rx="14" ry="3.5" fill="#4f5760"/><ellipse cx="232" cy="146" rx="10.5" ry="2.6" fill="#111"/><rect x="254" y="168" width="7" height="8" fill="#59626c"/><rect x="231" y="176" width="2" height="7" fill="#e7edf2"/>`;
+  s += flecha(286);
+  // 3 buzo con tapón
+  s += tit(350, 'Buzo', 'con tapón y 4|ventanas laterales');
+  s += `<rect x="336" y="96" width="28" height="4" rx="1" fill="#59626c"/><rect x="340" y="100" width="20" height="120" fill="url(#cilG)"/><rect x="342" y="204" width="7" height="9" fill="#0a0c0e"/><rect x="352" y="204" width="6" height="9" fill="#0a0c0e"/><rect x="340" y="213" width="20" height="5" fill="#3d444c"/>`;
+  s += flecha(384);
+  // 4 cuerpo (visto desde la ranura 1, camisa transparente)
+  const cx = 520, sc = 1.7, zb = 214;
+  const Xc = y => cx + y * sc, Zc = z => zb - z * sc;
+  s += tit(cx, 'Cuerpo (una pieza)', 'cámara + 4 ranuras + camisa|+ boquilla + caja');
+  s += `<rect x="${Xc(-37)}" y="${Zc(48)}" width="${18 * sc}" height="${Zc(-10) - Zc(48)}" fill="url(#cuerpoF)"/>`;
+  s += `<rect x="${Xc(-14)}" y="${Zc(48)}" width="${28 * sc}" height="${Zc(-6) - Zc(48)}" fill="url(#cilG)"/>`;
+  s += `<rect x="${Xc(-0.75)}" y="${Zc(36)}" width="${1.5 * sc}" height="${Zc(-0.4) - Zc(36)}" fill="#0a0c0e"/>`;
+  s += `<rect x="${Xc(-14)}" y="${Zc(36)}" width="${1.2 * sc}" height="${Zc(0) - Zc(36)}" fill="#0a0c0e"/><rect x="${Xc(12.8)}" y="${Zc(36)}" width="${1.2 * sc}" height="${Zc(0) - Zc(36)}" fill="#0a0c0e"/>`;
+  s += `<rect x="${Xc(-10.5)}" y="${Zc(45)}" width="${4 * sc}" height="${5 * sc}" fill="#0a0c0e"/><rect x="${Xc(6.5)}" y="${Zc(45)}" width="${4 * sc}" height="${5 * sc}" fill="#0a0c0e"/>`;
+  s += `<rect x="${Xc(-0.6)}" y="${Zc(14)}" width="${1.2 * sc}" height="${Zc(-24) - Zc(14)}" fill="#e0a92c" opacity=".9"/>`;
+  s += `<rect x="${Xc(-20)}" y="${Zc(48)}" width="${40 * sc}" height="${Zc(-6) - Zc(48)}" fill="url(#vidrio)" stroke="#7f9ab3" stroke-width="1.2"/>`;
+  s += `<polygon points="${Xc(-20)},${Zc(-6)} ${Xc(20)},${Zc(-6)} ${Xc(6.5)},${Zc(-22)} ${Xc(-6.5)},${Zc(-22)}" fill="url(#vidrio)" stroke="#7f9ab3" stroke-width="1.2"/>`;
+  s += `<rect x="${Xc(-6.5)}" y="${Zc(-22)}" width="${13 * sc}" height="${6 * sc}" fill="url(#cilG)"/>`;
+  s += `<text x="${Xc(24)}" y="${Zc(22)}" font-size="12" fill="#1f2d3d">ranura</text><path d="M${Xc(23)},${Zc(24)} L${Xc(1)},${Zc(28)}" stroke="#1f2d3d" stroke-width="1"/>`;
+  s += `<text x="${Xc(24)}" y="${Zc(44)}" font-size="12" fill="#1f2d3d">rebose</text><path d="M${Xc(23)},${Zc(45)} L${Xc(10.5)},${Zc(43)}" stroke="#1f2d3d" stroke-width="1"/>`;
+  s += `<text x="${Xc(24)}" y="${Zc(-18)}" font-size="12" fill="#1f2d3d">boquilla</text>`;
+  s += `<text x="${Xc(-28)}" y="${Zc(20)}" font-size="11" fill="#cfd6dd" text-anchor="middle" transform="rotate(-90 ${Xc(-28)} ${Zc(20)})">electrónica</text>`;
+  s += flecha(612);
+  // 5 electrónica
+  s += tit(726, 'Electrónica', 'va en la caja, que|sirve de mango');
+  s += `<rect x="672" y="88" width="52" height="16" rx="2" fill="url(#pcbAzul)"/><rect x="678" y="91" width="34" height="10" fill="#04080c"/><text x="681" y="99" font-size="7" fill="#cfefff">287 mL</text>`;
+  s += `<rect x="736" y="84" width="30" height="24" rx="2" fill="#1f2a1f"/><rect x="741" y="88" width="16" height="13" fill="url(#metal)"/><rect x="761" y="92" width="7" height="8" fill="#9aa3ab"/>`;
+  s += `<rect x="674" y="120" width="32" height="24" rx="2" fill="url(#pcbAzul)"/><rect x="681" y="125" width="16" height="13" rx="1" fill="#15181b"/><rect x="697" y="127" width="12" height="4" rx="2" fill="#f3f5f7"/><rect x="697" y="134" width="12" height="4" rx="2" fill="#f3f5f7"/>`;
+  s += `<rect x="718" y="120" width="26" height="22" rx="2" fill="url(#pcbMorado)"/><rect x="726" y="127" width="9" height="9" fill="#15181b"/>`;
+  s += `<rect x="752" y="118" width="34" height="26" rx="4" fill="url(#lipo)" stroke="#b0b8c0"/><rect x="752" y="118" width="8" height="26" fill="#f0c43a" opacity=".85"/>`;
+  s += `<text x="726" y="162" font-size="12" fill="#4b5b6e" text-anchor="middle">OLED · XIAO · sensor</text><text x="726" y="176" font-size="12" fill="#4b5b6e" text-anchor="middle">acelerómetro · batería</text>`;
+  s += `<rect x="684" y="192" width="84" height="8" rx="2" fill="url(#tapaF)"/><text x="726" y="218" font-size="12" fill="#4b5b6e" text-anchor="middle">tapa de la caja</text>`;
+  s += flecha(806);
+  // 6 bolsa estanca
+  s += tit(890, 'Bolsa estanca', 'para llevarlo en|la riñonera');
+  s += `<rect x="852" y="92" width="76" height="110" rx="10" fill="#dfe9f2" stroke="#9fb3c6" stroke-width="1.5"/><rect x="852" y="104" width="76" height="5" fill="#9fb3c6"/><g transform="translate(890,172) scale(0.42,-0.42)">${glifo('')}</g>`;
+  document.getElementById('svgInt').innerHTML = s;
+})();
+
+// ------------------------------------------------------------- componentes --
+(function iconos() {
+  const set = (id, s) => document.getElementById(id).innerHTML = DEFS2 + s;
+  set('icSensor', `<ellipse cx="75" cy="84" rx="56" ry="6" fill="#c4cfdb" opacity=".6"/>
+    <rect x="28" y="22" width="80" height="58" rx="4" fill="url(#pcbAzul)"/><circle cx="35" cy="29" r="2.5" fill="#d6dde4"/><circle cx="101" cy="73" r="2.5" fill="#d6dde4"/>
+    <rect x="44" y="32" width="44" height="38" rx="4" fill="#15181b"/><text x="66" y="55" text-anchor="middle" font-size="8" fill="#9aa3ab">MS4525</text>
+    <rect x="88" y="38" width="36" height="9" rx="4.5" fill="#f3f5f7" stroke="#c3cbd3"/><rect x="88" y="55" width="36" height="9" rx="4.5" fill="#f3f5f7" stroke="#c3cbd3"/>`);
+  set('icAcc', `<ellipse cx="75" cy="84" rx="44" ry="6" fill="#c4cfdb" opacity=".6"/>
+    <rect x="42" y="24" width="56" height="54" rx="4" fill="url(#pcbMorado)"/><rect x="60" y="40" width="20" height="20" rx="2" fill="#15181b"/>
+    <text x="70" y="72" text-anchor="middle" font-size="8" fill="#e5dcff">LIS3DH</text>
+    <g stroke-width="2.4" stroke-linecap="round"><path d="M112,62 v-34" stroke="#2c6db3"/><path d="M112,62 h26" stroke="#eb6834"/><path d="M112,62 l-14,12" stroke="#1f9d55"/></g>
+    <text x="116" y="26" font-size="10" fill="#2c6db3">z</text><text x="134" y="74" font-size="10" fill="#eb6834">x</text><text x="92" y="84" font-size="10" fill="#1f9d55">y</text>`);
+  set('icXiao', `<ellipse cx="75" cy="84" rx="50" ry="6" fill="#c4cfdb" opacity=".6"/>
+    <rect x="36" y="18" width="78" height="62" rx="5" fill="#1f2a1f"/><rect x="48" y="28" width="46" height="40" rx="2" fill="url(#metal)"/>
+    <text x="71" y="46" text-anchor="middle" font-size="7.5" fill="#4b5560" font-weight="700">XIAO</text><text x="71" y="56" text-anchor="middle" font-size="6.5" fill="#4b5560">ESP32-C3</text>
+    <rect x="104" y="38" width="16" height="22" rx="3" fill="#9aa3ab" stroke="#6b737b"/>
+    <g fill="#d4b660">${[0, 1, 2, 3, 4, 5, 6].map(i => `<circle cx="${44 + i * 10}" cy="22" r="2.2"/><circle cx="${44 + i * 10}" cy="76" r="2.2"/>`).join('')}</g>`);
+  set('icOled', `<ellipse cx="75" cy="76" rx="62" ry="5" fill="#c4cfdb" opacity=".6"/>
+    <rect x="10" y="32" width="130" height="38" rx="4" fill="url(#pcbAzul)"/><rect x="22" y="38" width="100" height="26" rx="2" fill="#04080c"/>
+    <text x="30" y="58" font-size="18" font-weight="600" fill="#9fd8ff">287</text><text x="68" y="58" font-size="9" fill="#9fd8ff">mL</text>
+    <g fill="#d4b660">${[0, 1, 2, 3].map(i => `<circle cx="131" cy="${40 + i * 7}" r="2"/>`).join('')}</g>`);
+  set('icBat', `<ellipse cx="75" cy="84" rx="50" ry="6" fill="#c4cfdb" opacity=".6"/>
+    <rect x="30" y="32" width="76" height="44" rx="6" fill="url(#lipo)" stroke="#aeb7c0"/><rect x="30" y="32" width="16" height="44" rx="4" fill="#f0c43a"/>
+    <text x="74" y="52" text-anchor="middle" font-size="9" fill="#5b6570">3,7 V</text><text x="74" y="64" text-anchor="middle" font-size="9" fill="#5b6570">250 mAh</text>
+    <path d="M106,46 C118,46 118,36 130,36 M106,60 C118,60 118,50 130,50" stroke="#c0392b" stroke-width="2.6" fill="none"/><path d="M106,60 C118,60 118,50 130,50" stroke="#222" stroke-width="2.6" fill="none"/>`);
+})();
+
+// ------------------------------------------------------------- dimensiones --
+(function dims() {
+  const k = 2.0, X0 = 196, Z0 = 330;
+  const X = x => X0 + x * k, Y = z => Z0 - z * k;
+  let s = DEFS2;
+  s += `<g transform="translate(${X0},${Z0}) scale(${k},${-k})">${glifo('287')}</g>`;
+  const az = '#2c6db3';
+  const yA = Y(-28) + 22;
+  s += `<path d="M${X(-22)},${yA} H${X(22)} M${X(-22)},${yA - 5} v10 M${X(22)},${yA - 5} v10 M${X(-22)},${Y(-10) + 4} V${yA + 4} M${X(22)},${Y(-10) + 4} V${yA + 4}" stroke="${az}" stroke-width="1.3"/>`;
+  s += `<text x="${X(0)}" y="${yA + 20}" text-anchor="middle" font-size="16" font-weight="600" fill="${az}">≈ 44 mm</text>`;
+  const xB = X(22) + 26, xC = X(22) + 108;
+  s += `<path d="M${xB},${Y(51)} V${Y(-28)} M${xB - 5},${Y(51)} h10 M${xB - 5},${Y(-28)} h10" stroke="${az}" stroke-width="1.3"/>`;
+  s += `<text x="${xB + 8}" y="${Y(14)}" font-size="16" font-weight="600" fill="${az}">≈ 8 cm</text><text x="${xB + 8}" y="${Y(14) + 17}" font-size="12" fill="${az}">cuerpo</text>`;
+  s += `<path d="M${xC},${Y(132)} V${Y(-28)} M${xC - 5},${Y(132)} h10 M${xC - 5},${Y(-28)} h10" stroke="${az}" stroke-width="1.3"/>`;
+  s += `<text x="${xC + 8}" y="${Y(100)}" font-size="16" font-weight="600" fill="${az}">≈ 16 cm</text><text x="${xC + 8}" y="${Y(100) + 17}" font-size="12" fill="${az}">con</text><text x="${xC + 8}" y="${Y(100) + 31}" font-size="12" fill="${az}">embudo</text>`;
+  s += `<text x="16" y="${yA + 44}" font-size="14" fill="#4b5b6e">Fondo ≈ 57 mm · boca del embudo Ø75 mm</text>`;
+  document.getElementById('svgDim').innerHTML = s;
+})();
+
+// --------------------------------------------------------------------- uso --
+(function uso() {
+  const L = 'stroke="#3d5a80" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"';
+  const set = (id, s) => document.getElementById(id).innerHTML = DEFS2 + s;
+  set('u1', `<rect x="40" y="8" width="70" height="84" rx="6" fill="#2b3036"/><rect x="48" y="20" width="54" height="18" rx="2" fill="#03070b"/>
+    <text x="75" y="33" text-anchor="middle" font-size="11" font-weight="700" fill="#9fd8ff">LISTO</text><circle cx="75" cy="60" r="7" fill="#1a1d21" stroke="#9aa3ab" stroke-width="1.5"/>
+    <path d="M120,58 q10,-10 0,-20 M126,64 q18,-16 0,-32" ${L}/>`);
+  set('u2', `<g transform="translate(70,82) rotate(-15) scale(0.42,-0.42)">${glifo('')}</g>
+    <path d="M118,92 v-56" stroke="#9aa8b8" stroke-width="1.5" stroke-dasharray="4 4"/><path d="M118,92 l-16,-54" ${L}/><path d="M118,52 a40,40 0 0 0 -11,3" ${L}/><text x="122" y="50" font-size="12" font-weight="700" fill="#3d5a80">25°</text>`);
+  set('u3', `<path d="M24,22 h70 l-27,32 v16 h-16 v-16 z" ${L} fill="#eef3f7"/><ellipse cx="59" cy="22" rx="35" ry="6" ${L}/>
+    <path d="M59,0 q3,10 0,22" stroke="#e0a92c" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M59,72 q1,10 -1,26" stroke="#e0a92c" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <rect x="98" y="34" width="48" height="26" rx="3" fill="#03070b"/><text x="104" y="52" font-size="12" font-weight="700" fill="#9fd8ff">143</text><path d="M134,52 v-10 m-4,4 l4,-4 l4,4" stroke="#9fd8ff" stroke-width="1.5" fill="none"/>`);
+  set('u4', `<rect x="6" y="16" width="70" height="34" rx="5" fill="#1f2328"/><rect x="11" y="21" width="60" height="24" rx="2" fill="#03070b"/>
+    <text x="17" y="39" font-size="14" font-weight="700" fill="#9fd8ff">287 mL</text>
+    <rect x="86" y="10" width="44" height="56" rx="3" fill="#fff" stroke="#3d5a80" stroke-width="2"/><path d="M93,24 h30 M93,34 h30 M93,44 h22" stroke="#9aa8b8" stroke-width="2"/><text x="94" y="60" font-size="10" font-weight="700" fill="#3d5a80">287</text>
+    <path d="M128,70 l10,-22 l6,3 l-10,22 z" fill="#f0c43a" stroke="#3d5a80" stroke-width="1.5"/>
+    <rect x="16" y="62" width="50" height="34" rx="6" fill="#dfe9f2" stroke="#9fb3c6" stroke-width="1.5"/><rect x="16" y="68" width="50" height="3" fill="#9fb3c6"/>`);
+})();
+document.documentElement.dataset.alto = document.getElementById('page').scrollHeight;
+</script>
+</body>
+</html>

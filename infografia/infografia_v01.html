@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Uroflujómetro v0.1 · infografía</title>
+<style>
+  :root {
+    --bg: #edf1f6; --panel: #f8fafc; --line: #d5dde8; --navy: #10294a; --ink: #1f2d3d;
+    --ink2: #4b5b6e; --blue: #2c6db3; --green: #1f9d55; --amber: #e3ac3f;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); }
+  body { font-family: "Segoe UI", "Segoe UI Variable", system-ui, sans-serif; color: var(--ink); }
+  .page {
+    width: 1610px; padding: 22px 20px 24px;
+    display: grid; grid-template-columns: 490px 490px 560px; gap: 18px 20px;
+    grid-template-areas:
+      "hero hero r1"
+      "hero hero r2"
+      "int  int  comp"
+      "dim  uso  comp"
+      "dim  uso  vent";
+  }
+  .panel { background: var(--panel); border: 1.5px solid var(--line); border-radius: 14px; padding: 14px 18px 12px; }
+  .panel h2 { margin: 0 0 4px; font-size: 22px; font-weight: 700; color: var(--navy); }
+  .panel .sub { font-size: 14px; color: var(--ink2); margin: 0 0 6px; }
+  svg { display: block; }
+  svg text { font-family: "Segoe UI", system-ui, sans-serif; }
+
+  .hero { grid-area: hero; padding: 4px 6px 0; }
+  .hero h1 { margin: 0; font-size: 42px; line-height: 1.05; color: var(--navy); font-weight: 800; letter-spacing: -0.3px; }
+  .hero h1 span { font-size: 30px; font-weight: 600; }
+  .hero p { margin: 6px 0 0; font-size: 21px; color: #23364d; }
+  .hero p + p { margin-top: 2px; }
+
+  .r1 { grid-area: r1; } .r2 { grid-area: r2; } .int { grid-area: int; }
+  .comp { grid-area: comp; } .dim { grid-area: dim; } .uso { grid-area: uso; } .vent { grid-area: vent; }
+
+  .comp-row { display: grid; grid-template-columns: 150px 1fr; gap: 14px; align-items: center; padding: 10px 0; border-bottom: 1px solid #e3e9f0; }
+  .comp-row:last-child { border-bottom: 0; }
+  .comp-row b { display: block; font-size: 17px; color: var(--navy); }
+  .comp-row span { display: block; font-size: 15px; color: var(--ink2); line-height: 1.4; }
+
+  .steps { display: grid; gap: 4px; }
+  .step { display: grid; grid-template-columns: 34px 1fr 150px; gap: 12px; align-items: center; min-height: 118px; }
+  .num { width: 30px; height: 30px; border-radius: 50%; background: var(--blue); color: #fff; font-weight: 700; display: grid; place-items: center; font-size: 17px; }
+  .step p { margin: 0; font-size: 16px; line-height: 1.35; }
+
+  .checks { list-style: none; margin: 4px 0 10px; padding: 0; display: grid; gap: 7px; }
+  .checks li { display: grid; grid-template-columns: 24px 1fr; gap: 10px; font-size: 16px; line-height: 1.35; }
+  .checks li::before { content: "✓"; width: 20px; height: 20px; border-radius: 50%; background: var(--green); color: #fff; font-size: 13px; font-weight: 700; display: grid; place-items: center; margin-top: 1px; }
+  .nota { background: #e6eef8; border-radius: 10px; padding: 10px 14px; display: grid; grid-template-columns: 30px 1fr; gap: 12px; }
+  .nota .i { width: 28px; height: 28px; border-radius: 50%; background: var(--blue); color: #fff; font-weight: 700; font-style: italic; font-family: Georgia, serif; display: grid; place-items: center; font-size: 17px; }
+  .nota b { color: var(--navy); font-size: 15px; }
+  .nota p { margin: 2px 0 0; font-size: 14px; color: #34465c; line-height: 1.4; }
+  .peso { font-size: 15px; margin: 4px 0 0; }
+  .peso small { display: block; color: var(--ink2); font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="page" id="page">
+
+  <section class="hero">
+    <h1>Diseño con vertedero <span>(prototipo)</span></h1>
+    <p>Medición precisa de la cantidad de orina (50 – 800 mL)</p>
+    <p>Todo el sistema en un aparato que se cuelga del inodoro, sin depósito y sin desbordes.</p>
+    <svg id="svgHero" width="1000" height="590" viewBox="0 0 1000 590"></svg>
+  </section>
+
+  <section class="panel r1">
+    <h2>Colocación (en el inodoro)</h2>
+    <svg id="svgColoc" width="520" height="292" viewBox="0 0 520 292"></svg>
+  </section>
+
+  <section class="panel r2">
+    <h2>Corte: cómo mide</h2>
+    <p class="sub">Caudal por la ranura: <b>Q = ⅔ · Cd · b · √(2g) · h<sup>1,5</sup></b> &nbsp;→&nbsp; volumen = ∫ Q dt</p>
+    <svg id="svgCorte" width="520" height="300" viewBox="0 0 520 300"></svg>
+  </section>
+
+  <section class="panel int">
+    <h2>Vista interna (piezas)</h2>
+    <svg id="svgInt" width="960" height="262" viewBox="0 0 960 262"></svg>
+  </section>
+
+  <section class="panel comp">
+    <h2>Componentes principales</h2>
+    <div class="comp-row"><svg id="icSensor" width="150" height="96" viewBox="0 0 150 96"></svg>
+      <div><b>Sensor de presión</b><span>MS4525DO (±1 psi, I2C)<br>Lee el nivel con ±0,1 mm<br>Alternativa barata: HX710B</span></div></div>
+    <div class="comp-row"><svg id="icXiao" width="150" height="96" viewBox="0 0 150 96"></svg>
+      <div><b>XIAO ESP32-C3</b><span>21 × 17,5 mm, ultra compacta<br>USB-C, carga Li-Po y Bluetooth</span></div></div>
+    <div class="comp-row"><svg id="icOled" width="150" height="96" viewBox="0 0 150 96"></svg>
+      <div><b>Pantalla OLED 0,96"</b><span>128 × 64, I2C<br>Volumen, caudal y batería</span></div></div>
+    <div class="comp-row"><svg id="icBat" width="150" height="96" viewBox="0 0 150 96"></svg>
+      <div><b>Batería Li-Po 3,7 V</b><span>300 – 500 mAh<br>Carga por USB-C</span></div></div>
+    <div class="comp-row"><svg id="icCam" width="150" height="96" viewBox="0 0 150 96"></svg>
+      <div><b>Cámara con ranura</b><span>Vertedero de 3 × 70 mm<br>Impresa en PETG, sin piezas móviles</span></div></div>
+  </section>
+
+  <section class="panel dim">
+    <h2>Dimensiones y peso</h2>
+    <svg id="svgDim" width="450" height="440" viewBox="0 0 450 440"></svg>
+    <p class="peso"><b>Peso total (aprox.): 140 – 170 g</b><small>(según batería y relleno de impresión)</small></p>
+  </section>
+
+  <section class="panel uso">
+    <h2>Uso</h2>
+    <div class="steps">
+      <div class="step"><div class="num">1</div><p>Cuelga el aparato del borde del inodoro, en vertical.</p><svg id="u1" width="150" height="100" viewBox="0 0 150 100"></svg></div>
+      <div class="step"><div class="num">2</div><p>Pulsa el botón y espera a «LISTO».</p><svg id="u2" width="150" height="100" viewBox="0 0 150 100"></svg></div>
+      <div class="step"><div class="num">3</div><p>Orina en el embudo: la medida empieza sola.</p><svg id="u3" width="150" height="100" viewBox="0 0 150 100"></svg></div>
+      <div class="step"><div class="num">4</div><p>Lee el resultado y enjuaga con agua (no se registra).</p><svg id="u4" width="150" height="100" viewBox="0 0 150 100"></svg></div>
+    </div>
+  </section>
+
+  <section class="panel vent">
+    <h2>Ventajas de este diseño</h2>
+    <ul class="checks">
+      <li>No desborda: la ranura evacua 100 mL/s, el doble del chorro más fuerte</li>
+      <li>Sin piezas móviles; el sensor no toca la orina</li>
+      <li>Mide volumen, caudal máximo, caudal medio y curva</li>
+      <li>Rebose interno: si algo falla, nada cae fuera</li>
+      <li>Fácil de limpiar: tapa y buzo desmontables</li>
+      <li>Portátil y recargable por USB-C</li>
+    </ul>
+    <div class="nota"><div class="i">i</div><div><b>Nota</b>
+      <p>Prototipo v0.1. La precisión objetivo (&lt; 5 % tras calibrar con agua y báscula) está por validar en el aparato real. No es un producto sanitario.</p></div></div>
+  </section>
+</div>
+
+<script>
+'use strict';
+// ------------------------------------------------------------ utilidades ----
+const f = n => n.toFixed(1);
+const pd = (pts, close = true) => 'M' + pts.map(p => f(p[0]) + ',' + f(p[1])).join('L') + (close ? 'Z' : '');
+function hull(pts) {
+  const p = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lo = [], up = [];
+  for (const q of p) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); }
+  for (const q of p.reverse()) { while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); }
+  return lo.slice(0, -1).concat(up.slice(0, -1));
+}
+// Proyección oblicua (gabinete): profundidad +Y hacia arriba a la derecha
+function proy(S, OX, OY, YF) {
+  const c = Math.cos(Math.PI / 6) * 0.5, s = Math.sin(Math.PI / 6) * 0.5;
+  return (x, y, z) => [OX + (x + (y - YF) * c) * S, OY - (z + (y - YF) * s) * S];
+}
+const anillo = (P, cx, cy, z, r, n = 90) => Array.from({ length: n }, (_, i) => { const a = i / n * Math.PI * 2; return P(cx + r * Math.cos(a), cy + r * Math.sin(a), z); });
+function caja(P, x0, x1, y0, y1, z0, z1, g) {
+  const F = [P(x0, y0, z0), P(x1, y0, z0), P(x1, y0, z1), P(x0, y0, z1)];
+  const R = [P(x1, y0, z0), P(x1, y1, z0), P(x1, y1, z1), P(x1, y0, z1)];
+  const T = [P(x0, y0, z1), P(x1, y0, z1), P(x1, y1, z1), P(x0, y1, z1)];
+  return `<path d="${pd(R)}" fill="url(#${g}R)"/><path d="${pd(F)}" fill="url(#${g}F)"/><path d="${pd(T)}" fill="url(#${g}T)"/>` +
+    `<path d="${pd([F[3], F[2], R[2]], false)}" fill="none" stroke="rgba(255,255,255,.16)" stroke-width="1.2"/>`;
+}
+function cil(P, cx, cy, z0, z1, r, lado, tapa) {
+  const b = anillo(P, cx, cy, z0, r), t = anillo(P, cx, cy, z1, r);
+  return `<path d="${pd(hull(b.concat(t)))}" fill="${lado}"/><path d="${pd(t)}" fill="${tapa}"/>`;
+}
+function etiqueta(x, y, titulo, sub, ancla = 'start', tam = 17) {
+  const dy = tam + 3;
+  return `<text x="${x}" y="${y}" text-anchor="${ancla}" font-size="${tam}" font-weight="700" fill="#10294a">${titulo}</text>` +
+    (sub ? sub.split('|').map((s, i) => `<text x="${x}" y="${y + dy + i * (tam + 1)}" text-anchor="${ancla}" font-size="${tam - 2}" fill="#4b5b6e">${s}</text>`).join('') : '');
+}
+const guia = (x1, y1, x2, y2) => `<path d="M${f(x1)},${f(y1)} L${f(x2)},${f(y2)}" stroke="#1d2b3a" stroke-width="1.3" fill="none"/><circle cx="${f(x2)}" cy="${f(y2)}" r="3" fill="#1d2b3a"/>`;
+
+const DEFS = `
+<defs>
+  <linearGradient id="cuerpoF" x1="0" x2="1"><stop offset="0" stop-color="#2b3036"/><stop offset=".45" stop-color="#3d444c"/><stop offset="1" stop-color="#262a30"/></linearGradient>
+  <linearGradient id="cuerpoR" x1="0" x2="1"><stop offset="0" stop-color="#1c1f23"/><stop offset="1" stop-color="#2a2e34"/></linearGradient>
+  <linearGradient id="cuerpoT" x1="0" x2="1" y1="1" y2="0"><stop offset="0" stop-color="#4b525b"/><stop offset="1" stop-color="#5a626c"/></linearGradient>
+  <linearGradient id="tapaF" x1="0" x2="1"><stop offset="0" stop-color="#33393f"/><stop offset="1" stop-color="#454c55"/></linearGradient>
+  <linearGradient id="tapaR" x1="0" x2="1"><stop offset="0" stop-color="#22262b"/><stop offset="1" stop-color="#2e3238"/></linearGradient>
+  <linearGradient id="tapaT" x1="0" x2="1"><stop offset="0" stop-color="#5a626c"/><stop offset="1" stop-color="#6a737e"/></linearGradient>
+  <linearGradient id="sopF" x1="0" x2="1"><stop offset="0" stop-color="#4a525b"/><stop offset="1" stop-color="#58616b"/></linearGradient>
+  <linearGradient id="sopR" x1="0" x2="1"><stop offset="0" stop-color="#30353b"/><stop offset="1" stop-color="#3a4047"/></linearGradient>
+  <linearGradient id="sopT" x1="0" x2="1"><stop offset="0" stop-color="#6c757f"/><stop offset="1" stop-color="#7b848e"/></linearGradient>
+  <linearGradient id="cilG" x1="0" x2="1"><stop offset="0" stop-color="#22262b"/><stop offset=".35" stop-color="#4a525b"/><stop offset=".6" stop-color="#3a4148"/><stop offset="1" stop-color="#1d2025"/></linearGradient>
+  <linearGradient id="cilT" x1="0" x2="1"><stop offset="0" stop-color="#4f5760"/><stop offset="1" stop-color="#666f79"/></linearGradient>
+  <linearGradient id="embudoG" x1="0" x2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".92"/><stop offset=".3" stop-color="#eef3f7" stop-opacity=".8"/><stop offset=".75" stop-color="#d3dde6" stop-opacity=".82"/><stop offset="1" stop-color="#b9c6d2" stop-opacity=".9"/></linearGradient>
+  <linearGradient id="embudoIn" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#c8d4de"/><stop offset="1" stop-color="#e9eff4"/></linearGradient>
+  <linearGradient id="tuboG" x1="0" x2="1"><stop offset="0" stop-color="#f6e7c4"/><stop offset=".5" stop-color="#e9c77c"/><stop offset="1" stop-color="#d8ad55"/></linearGradient>
+  <linearGradient id="vidrio" x1="0" x2="1"><stop offset="0" stop-color="#cfe0ee" stop-opacity=".55"/><stop offset="1" stop-color="#a9c2d6" stop-opacity=".45"/></linearGradient>
+  <linearGradient id="pcbAzul" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#2b63b3"/><stop offset="1" stop-color="#1b4384"/></linearGradient>
+  <linearGradient id="metal" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#eef1f4"/><stop offset=".5" stop-color="#b8c0c8"/><stop offset="1" stop-color="#dfe4e9"/></linearGradient>
+  <linearGradient id="lipo" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#f1f3f5"/><stop offset=".5" stop-color="#c9cfd6"/><stop offset="1" stop-color="#e6e9ec"/></linearGradient>
+  <linearGradient id="agua" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#f0c45a" stop-opacity=".75"/><stop offset="1" stop-color="#d99a1e" stop-opacity=".85"/></linearGradient>
+  <filter id="sombra" x="-20%" y="-20%" width="140%" height="160%"><feGaussianBlur stdDeviation="9"/></filter>
+</defs>`;
+
+// --------------------------------------------------------------- portada ----
+(function hero() {
+  const S = 1.95, P = proy(S, 480, 425, -44.2);
+  let s = DEFS;
+  // sombra suave
+  s += `<ellipse cx="520" cy="${f(P(10, 0, -32)[1] + 14)}" rx="120" ry="16" fill="#9fb0c3" opacity=".45" filter="url(#sombra)"/>`;
+  // soporte en J (detrás)
+  s += caja(P, -84.4, -80.4, -7.5, 7.5, 83, 105, 'sop');
+  s += caja(P, -84.4, -18.4, -7.5, 7.5, 101, 105, 'sop');
+  // cámara (parte alta) y canal de descarga
+  s += cil(P, 0, 0, 92, 105, 18.4, 'url(#cilG)', 'url(#cilT)');
+  s += caja(P, 0, 38.8, -17.4, 17.4, 5.6, 105, 'cuerpo');
+  // tolva y espigón de salida
+  const tolva = [P(0, -17.4, 5.6), P(38.8, -17.4, 5.6), P(38.8, 17.4, 5.6), P(0, 17.4, 5.6)].concat(anillo(P, 27.4, 0, -12.4, 8));
+  s += `<path d="${pd(hull(tolva))}" fill="url(#cuerpoR)"/>`;
+  s += cil(P, 27.4, 0, -32, -12.4, 8, 'url(#cilG)', '#3a4148');
+  s += cil(P, 27.4, 0, -28, -25, 8.8, 'url(#cilG)', '#3a4148');
+  // compartimento de electrónica
+  s += caja(P, -25.4, 25.4, -44.2, -17.4, -32, 105, 'cuerpo');
+  // tapa (placa con huella círculo + canal)
+  const huella = [];
+  for (let a = -71; a >= -289; a -= 4) { const r = a * Math.PI / 180; huella.push([18.4 * Math.cos(r), 18.4 * Math.sin(r)]); }
+  huella.push([5.98, 17.4], [38.8, 17.4], [38.8, -17.4], [5.98, -17.4]);
+  s += `<path d="${pd(huella.map(p => P(p[0], p[1], 105)))}" fill="#23272c"/>`;
+  s += `<path d="${pd(huella.map(p => P(p[0], p[1], 108)))}" fill="url(#tapaT)"/>`;
+  // tapa del compartimento
+  s += caja(P, -25.4, 25.4, -44.2, -19.0, 105, 107, 'tapa');
+  // respiradero y cuello
+  s += cil(P, 27.4, 6, 108, 114, 4, 'url(#cilG)', '#555d66');
+  s += `<path d="${pd(anillo(P, 27.4, 6, 114, 2, 30))}" fill="#111"/>`;
+  s += cil(P, -5.5, 0, 108, 126, 15, 'url(#cilG)', '#4f5760');
+  // embudo translúcido
+  const eb = anillo(P, -5.5, 0, 126, 12.5), et = anillo(P, -5.5, 0, 186, 55), ei = anillo(P, -5.5, 0, 186, 53.2);
+  s += `<path d="${pd(hull(eb.concat(et)))}" fill="url(#embudoG)" stroke="#a9b8c6" stroke-width="1.2"/>`;
+  s += `<path d="${pd(et)}" fill="#e3eaf0" stroke="#a9b8c6" stroke-width="1.2"/>`;
+  s += `<path d="${pd(ei)}" fill="url(#embudoIn)"/>`;
+  const hl = [P(-5.5 - 50, -14, 182), P(-5.5 - 28, -20, 150), P(-5.5 - 13, -8, 128)];
+  s += `<path d="M${f(hl[0][0])},${f(hl[0][1])} Q${f(hl[1][0])},${f(hl[1][1])} ${f(hl[2][0])},${f(hl[2][1])}" stroke="#fff" stroke-width="4" fill="none" opacity=".85" stroke-linecap="round"/>`;
+  // pantalla OLED y botón en la cara frontal
+  const o0 = P(-14, -44.2, 90), o1 = P(14, -44.2, 73);
+  s += `<rect x="${f(o0[0])}" y="${f(o0[1])}" width="${f(o1[0] - o0[0])}" height="${f(o1[1] - o0[1])}" rx="3" fill="#0d1014" stroke="#51585f" stroke-width="1"/>`;
+  const v0 = P(-12, -44.2, 88), v1 = P(12, -44.2, 75);
+  s += `<rect x="${f(v0[0])}" y="${f(v0[1])}" width="${f(v1[0] - v0[0])}" height="${f(v1[1] - v0[1])}" rx="1.5" fill="#03070b"/>`;
+  s += `<text x="${f(v0[0] + 4)}" y="${f(v1[1] - 6)}" font-size="14" font-weight="600" fill="#cfefff">287</text><text x="${f(v0[0] + 32)}" y="${f(v1[1] - 6)}" font-size="8" fill="#cfefff">mL</text>`;
+  s += `<rect x="${f(v1[0] - 10)}" y="${f(v0[1] + 3)}" width="7" height="3.5" fill="none" stroke="#cfefff" stroke-width=".8"/>`;
+  const bt = P(0, -44.2, 61);
+  s += `<circle cx="${f(bt[0])}" cy="${f(bt[1])}" r="8.5" fill="#1a1d21" stroke="#5c646c" stroke-width="1.5"/><circle cx="${f(bt[0])}" cy="${f(bt[1])}" r="5.5" fill="#2b3036"/>`;
+  // tubo de salida translúcido con orina
+  const t0 = P(27.4, 0, -27);
+  const tubo = `M${f(t0[0])},${f(t0[1])} C${f(t0[0])},${f(t0[1] + 70)} ${f(t0[0] + 25)},${f(t0[1] + 112)} ${f(t0[0] + 130)},${f(t0[1] + 116)} C${f(t0[0] + 250)},${f(t0[1] + 120)} ${f(t0[0] + 330)},${f(t0[1] + 108)} 1010,${f(t0[1] + 96)}`;
+  s += `<path d="${tubo}" stroke="#c9a65a" stroke-width="33" fill="none" opacity=".55" stroke-linecap="butt"/>`;
+  s += `<path d="${tubo}" stroke="url(#tuboG)" stroke-width="28" fill="none" opacity=".75"/>`;
+  s += `<path d="${tubo}" stroke="#d99a1e" stroke-width="11" fill="none" opacity=".55"/>`;
+  s += `<path d="${tubo}" stroke="#fff" stroke-width="3" fill="none" opacity=".7" transform="translate(-7,-5)"/>`;
+
+  // --- etiquetas
+  s += etiqueta(40, 70, 'Embudo', 'extraíble y lavable (220 mL)');
+  s += guia(262, 76, ...P(-40, 0, 158));
+  s += etiqueta(40, 168, 'Soporte', 'se cuelga del borde|del inodoro');
+  s += guia(222, 174, ...P(-62, -7.5, 105));
+  s += etiqueta(40, 300, 'Botón', 'encendido / cero');
+  s += guia(178, 306, bt[0] - 9, bt[1]);
+  s += etiqueta(690, 108, 'Respiradero', 'el canal queda a presión|atmosférica');
+  s += guia(684, 114, ...P(27.4, 6, 113));
+  s += etiqueta(690, 210, 'Canal de descarga', 'recoge lo que sale|por la ranura');
+  s += guia(684, 216, ...P(38.8, 0, 62));
+  s += etiqueta(690, 438, 'Salida Ø12 mm', 'tubo flexible a la taza');
+  s += guia(684, 444, t0[0] + 42, t0[1] + 100);
+
+  // ampliación de la pantalla con el resultado
+  const zx = 40, zy = 372, zw = 270, zh = 150;
+  s += guia(zx + zw, zy + 30, o0[0], (o0[1] + o1[1]) / 2);
+  s += `<rect x="${zx}" y="${zy}" width="${zw}" height="${zh}" rx="14" fill="#1f2328"/>`;
+  s += `<rect x="${zx + 10}" y="${zy + 10}" width="${zw - 20}" height="${zh - 20}" rx="5" fill="#03070b"/>`;
+  s += `<text x="${zx + 22}" y="${zy + 52}" font-size="34" font-weight="600" fill="#cfefff">287</text><text x="${zx + 92}" y="${zy + 52}" font-size="15" fill="#cfefff">mL</text>`;
+  s += `<rect x="${zx + zw - 46}" y="${zy + 20}" width="22" height="11" fill="none" stroke="#cfefff" stroke-width="1.4"/><rect x="${zx + zw - 23}" y="${zy + 23}" width="3" height="5" fill="#cfefff"/><rect x="${zx + zw - 44}" y="${zy + 22}" width="15" height="7" fill="#cfefff"/>`;
+  s += `<text x="${zx + 22}" y="${zy + 74}" font-size="13" fill="#cfefff">Qmax 23,4   Qmed 12,1 mL/s   24 s</text>`;
+  let curva = '';
+  for (let i = 0; i <= 60; i++) { const x = i / 60, q = Math.pow(x, 1.1) * Math.pow(1 - x, 2.3) / 0.0905; curva += (i ? 'L' : 'M') + f(zx + 22 + x * (zw - 44)) + ',' + f(zy + zh - 20 - q * 38); }
+  s += `<path d="${curva}" stroke="#cfefff" stroke-width="1.8" fill="none"/>`;
+  s += `<text x="${zx}" y="${zy - 10}" font-size="17" font-weight="700" fill="#10294a">Pantalla OLED <tspan font-weight="400" font-size="15" fill="#4b5b6e">(resultado)</tspan></text>`;
+
+  // insignia de capacidad
+  s += `<g transform="translate(690,300)"><rect width="270" height="64" rx="12" fill="#e5f4ec" stroke="#9fd3b5"/>` +
+       `<circle cx="28" cy="32" r="14" fill="#1f9d55"/><path d="M21,32 l5,5 l9,-10" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>` +
+       `<text x="52" y="27" font-size="16" font-weight="700" fill="#14532d">Evacua hasta 100 mL/s</text>` +
+       `<text x="52" y="47" font-size="14" fill="#2f6b48">el chorro normal es de 15–30 mL/s</text></g>`;
+  document.getElementById('svgHero').innerHTML = s;
+})();
+
+// ------------------------------------------------------------ colocación ----
+(function coloc() {
+  const k = 0.95, X0 = 162, Z0 = 92 + 105 * k;          // z = 105 (borde superior del cuerpo) en y = 92
+  const X = x => X0 + x * k, Y = z => Z0 - z * k;
+  let s = DEFS;
+  // inodoro en corte lateral
+  s += `<path d="M88,96 H137 V116 L139,214 Q144,256 200,262 L250,262 Q300,260 312,220 Q320,184 320,116 V96 H338 V116 Q338,226 306,258 Q286,276 246,276 L196,276 Q132,274 112,232 Q96,196 92,118 Z" fill="#dfe5ec" stroke="#9aa8b8" stroke-width="1.5"/>`;
+  s += `<path d="M137,116 L139,214 Q144,256 200,262 L250,262 Q300,260 312,220 Q320,184 320,116 Z" fill="#f3f6f9" stroke="#9aa8b8" stroke-width="1.5"/>`;
+  s += `<path d="M150,246 Q160,258 200,262 L250,262 Q290,260 304,240 Z" fill="#cfe3f3"/>`;
+  // soporte sobre el borde
+  s += `<path d="M${X(-84.4)},${Y(83)} V${Y(105)} H${X(-18.4)} V${Y(55)} H${X(-24.4)} V${Y(101)} H${X(-80.4)} V${Y(83)} Z" fill="#59626c"/>`;
+  // cuerpo (vista frontal)
+  s += `<rect x="${X(-25.4)}" y="${Y(105)}" width="${50.8 * k}" height="${137 * k}" rx="3" fill="url(#cuerpoF)"/>`;
+  s += `<rect x="${X(25.4)}" y="${Y(105)}" width="${13.4 * k}" height="${99.4 * k}" fill="#22262b"/>`;
+  s += `<path d="M${X(25.4)},${Y(5.6)} H${X(38.8)} L${X(35.4)},${Y(-12.4)} H${X(25.4)} Z" fill="#1d2025"/>`;
+  s += `<rect x="${X(25.4)}" y="${Y(-12.4)}" width="${10 * k}" height="${19.6 * k}" fill="#2b3036"/>`;
+  s += `<rect x="${X(-12)}" y="${Y(88)}" width="${24 * k}" height="${13 * k}" rx="1" fill="#03070b"/><circle cx="${X(0)}" cy="${Y(61)}" r="3.4" fill="#5c646c"/>`;
+  s += `<rect x="${X(-18.4)}" y="${Y(108)}" width="${57.2 * k}" height="${3 * k}" fill="#555d66"/>`;
+  s += `<rect x="${X(-20.5)}" y="${Y(126)}" width="${30 * k}" height="${18 * k}" fill="#3d444c"/>`;
+  s += `<path d="M${X(-18)},${Y(126)} L${X(-60.5)},${Y(186)} H${X(49.5)} L${X(7)},${Y(126)} Z" fill="url(#embudoG)" stroke="#a9b8c6" stroke-width="1.2"/>`;
+  // tubo de salida a la taza
+  s += `<path d="M${X(30.4)},${Y(-30)} C${X(30.4)},${Y(-60)} ${X(60)},${Y(-70)} ${X(85)},${Y(-62)}" stroke="#e2c27c" stroke-width="13" fill="none" opacity=".85" stroke-linecap="round"/>`;
+  s += `<path d="M${X(30.4)},${Y(-30)} C${X(30.4)},${Y(-60)} ${X(60)},${Y(-70)} ${X(85)},${Y(-62)}" stroke="#d99a1e" stroke-width="4" fill="none" opacity=".6" stroke-linecap="round"/>`;
+  // cotas
+  const cx1 = X(62), cx2 = X(84);
+  s += `<path d="M${cx1},${Y(108)} V${Y(-32)} M${cx1 - 5},${Y(108)} H${cx1 + 5} M${cx1 - 5},${Y(-32)} H${cx1 + 5}" stroke="#2c6db3" stroke-width="1.3"/>`;
+  s += `<text x="${cx1 + 7}" y="${Y(36)}" font-size="14" font-weight="600" fill="#2c6db3">≈ 14 cm</text>`;
+  s += `<path d="M${cx2 + 34},${Y(186)} V${Y(-32)} M${cx2 + 29},${Y(186)} H${cx2 + 39} M${cx2 + 29},${Y(-32)} H${cx2 + 39}" stroke="#2c6db3" stroke-width="1.3"/>`;
+  s += `<text x="${cx2 + 41}" y="${Y(150)}" font-size="14" font-weight="600" fill="#2c6db3">≈ 22 cm</text><text x="${cx2 + 41}" y="${Y(150) + 16}" font-size="12" fill="#2c6db3">con embudo</text>`;
+  // etiquetas
+  s += etiqueta(8, 40, 'Soporte', 'sobre el borde|con dos bridas', 'start', 14);
+  s += guia(62, 82, X(-60), Y(105) + 1);
+  s += etiqueta(352, 124, 'En vertical', 'funciona por gravedad', 'start', 15);
+  s += etiqueta(352, 200, 'Salida hacia la taza', 'sin bucles en el tubo', 'start', 15);
+  s += guia(348, 196, X(84), Y(-62));
+  s += `<text x="8" y="289" font-size="13" fill="#4b5b6e">Sentado/a: baja el soporte en el cuerpo para que el embudo quede bajo el asiento.</text>`;
+  document.getElementById('svgColoc').innerHTML = s;
+})();
+
+// ------------------------------------------------------------------ corte ----
+(function corte() {
+  const k = 1.42, F = 262, top = F - 95 * k;
+  const yh = z => F - z * k;
+  const h = 32;
+  let s = DEFS;
+  // embudo y cuello
+  s += `<polygon points="52,22 176,22 128,92 104,92" fill="url(#embudoG)" stroke="#a9b8c6" stroke-width="1.3"/>`;
+  s += `<rect x="102" y="92" width="28" height="${top - 6 - 92}" fill="#e7edf2" stroke="#a9b8c6" stroke-width="1.2"/>`;
+  // chorro de entrada
+  s += `<rect x="113" y="0" width="6" height="${yh(h) - 0}" rx="2" fill="#e0a92c" opacity=".85"/>`;
+  // agua en la cámara
+  s += `<rect x="96" y="${yh(h)}" width="48" height="${h * k}" fill="url(#agua)" opacity=".7"/>`;
+  // buzo
+  s += `<rect x="102" y="${top}" width="3" height="${F - 12 - top}" fill="#59626c"/><rect x="127" y="${top}" width="3" height="${F - 12 - top}" fill="#59626c"/>`;
+  // paredes de la cámara, ranura y ventanas
+  s += `<rect x="90" y="${top - 6}" width="6" height="${F - top + 6}" fill="#2b3036"/>`;
+  s += `<rect x="144" y="${top - 6}" width="6" height="${yh(86) - top + 6}" fill="#2b3036"/>`;
+  s += `<rect x="144" y="${yh(78)}" width="6" height="${yh(70) - yh(78)}" fill="#2b3036"/>`;
+  s += `<rect x="144.5" y="${yh(70)}" width="5" height="${F - yh(70)}" fill="none" stroke="#7d8894" stroke-dasharray="3 3"/>`;
+  s += `<rect x="144.5" y="${yh(86)}" width="5" height="${yh(78) - yh(86)}" fill="none" stroke="#7d8894" stroke-dasharray="3 3"/>`;
+  // tapa, canal de descarga, base, tolva y salida
+  s += `<rect x="90" y="${top - 6}" width="104" height="6" fill="#3d444c"/><rect x="102" y="${top - 6}" width="28" height="6" fill="#e7edf2"/>`;
+  s += `<rect x="188" y="${top - 6}" width="6" height="${F - top + 6}" fill="#2b3036"/><rect x="176" y="${top - 15}" width="5" height="9" fill="#59626c"/>`;
+  s += `<rect x="90" y="${F}" width="60" height="9" fill="#2b3036"/>`;
+  s += `<polygon points="150,${F} 156,${F} 166,${F + 18} 166,300 160,300 160,${F + 22} 150,${F + 9}" fill="#2b3036"/>`;
+  s += `<polygon points="188,${F} 194,${F} 194,${F + 5} 182,${F + 22} 182,300 176,300 176,${F + 18}" fill="#2b3036"/>`;
+  // chorro por la ranura
+  s += `<rect x="151" y="${yh(h)}" width="8" height="${h * k + 10}" rx="2" fill="#e0a92c" opacity=".85"/>`;
+  s += `<rect x="166" y="${F + 14}" width="10" height="${300 - F - 14}" fill="#e0a92c" opacity=".7"/>`;
+  // toma de presión, columna de aire y sensor
+  s += `<rect x="16" y="150" width="58" height="34" rx="5" fill="#eef2f6" stroke="#59626c" stroke-width="1.5"/>`;
+  s += `<text x="45" y="164" text-anchor="middle" font-size="11" fill="#1f2d3d">sensor de</text><text x="45" y="177" text-anchor="middle" font-size="11" fill="#1f2d3d">presión</text>`;
+  s += `<path d="M136,${F + 1} V${F + 5} H45 V184" stroke="#59626c" stroke-width="3.5" fill="none" stroke-linejoin="round"/>`;
+  s += `<path d="M136,${F + 1} V${F + 5} H45 V184" stroke="#2c6db3" stroke-width="1.6" stroke-dasharray="3 3" fill="none"/>`;
+  // cota h
+  s += `<path d="M82,${yh(h)} V${F} M78,${yh(h)} H86 M78,${F} H86" stroke="#1f2d3d" stroke-width="1.2"/><text x="70" y="${(yh(h) + F) / 2 + 5}" font-size="14" font-weight="700" fill="#1f2d3d" text-anchor="end">h</text>`;
+  // etiquetas
+  const L = 262;
+  s += etiqueta(L, 30, 'Embudo', '', 'start', 15);                        s += guia(L - 4, 26, 166, 34);
+  s += etiqueta(L, 74, 'Rebose interno (78 mm)', 'si se pasa, va a la salida', 'start', 15); s += guia(L - 4, 70, 150, yh(82));
+  s += etiqueta(L, 118, 'Canal de descarga', 'a presión atmosférica', 'start', 15); s += guia(L - 4, 114, 191, 150);
+  s += etiqueta(L, 162, 'Buzo', 'frena el chorro', 'start', 15);         s += guia(L - 4, 158, 128, yh(58));
+  s += etiqueta(L, 206, 'Ranura 3 × 70 mm', 'más caudal = más nivel h', 'start', 15); s += guia(L - 4, 202, 150, yh(40));
+  s += etiqueta(L, 250, 'Columna de aire', 'el sensor no toca la orina', 'start', 15); s += guia(L - 4, 246, 100, F + 5);
+  document.getElementById('svgCorte').innerHTML = s;
+})();
+
+// --------------------------------------------------------- vista interna ----
+(function interna() {
+  let s = DEFS;
+  const base = 262;
+  const flecha = (x) => `<path d="M${x},176 h26 m-7,-6 l7,6 l-7,6" stroke="#7d8ea3" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const tit = (x, t, sub) => `<text x="${x}" y="28" text-anchor="middle" font-size="16" font-weight="700" fill="#10294a">${t}</text>` +
+    sub.split('|').map((l, i) => `<text x="${x}" y="${47 + i * 16}" text-anchor="middle" font-size="13" fill="#4b5b6e">${l}</text>`).join('');
+  // 1 embudo
+  s += tit(80, 'Embudo', 'silicona o PETG|220 mL');
+  s += `<path d="M22,118 H138 L92,196 V226 H68 V196 Z" fill="url(#embudoG)" stroke="#a9b8c6" stroke-width="1.3"/><ellipse cx="80" cy="118" rx="58" ry="9" fill="#e3eaf0" stroke="#a9b8c6"/>`;
+  s += flecha(150);
+  // 2 tapa
+  s += tit(232, 'Tapa', 'con cuello|y respiradero');
+  s += `<rect x="190" y="200" width="84" height="8" rx="2" fill="url(#tapaF)"/><rect x="208" y="168" width="34" height="32" fill="url(#cilG)"/><ellipse cx="225" cy="168" rx="17" ry="4" fill="#4f5760"/><ellipse cx="225" cy="168" rx="13" ry="3" fill="#111"/><rect x="256" y="192" width="8" height="8" fill="#59626c"/>`;
+  s += flecha(290);
+  // 3 buzo
+  s += tit(352, 'Buzo', 'tubo de entrada|Ø16 mm');
+  s += `<rect x="337" y="96" width="30" height="4" rx="1" fill="#59626c"/><rect x="341" y="100" width="22" height="140" fill="url(#cilG)"/>`;
+  s += flecha(386);
+  // 4 cuerpo visto desde la ranura (canal de descarga transparente)
+  const cx = 520, sc = 1.25, zb = 228;
+  const Xc = y => cx + y * sc, Zc = z => zb - z * sc * 0.9;
+  s += tit(cx, 'Cuerpo (una pieza)', 'cámara + ranura + canal|+ compartimento');
+  s += `<rect x="${Xc(-44.2)}" y="${Zc(105)}" width="${26.8 * sc}" height="${Zc(-32) - Zc(105)}" fill="url(#cuerpoF)"/>`;
+  s += `<rect x="${Xc(-18.4)}" y="${Zc(105)}" width="${36.8 * sc}" height="${Zc(-32) - Zc(105)}" fill="url(#cilG)"/>`;
+  s += `<rect x="${Xc(-1.5)}" y="${Zc(80)}" width="${3 * sc}" height="${Zc(9.4) - Zc(80)}" fill="#0a0c0e"/>`;
+  s += `<rect x="${Xc(-11)}" y="${Zc(96)}" width="${9 * sc}" height="${Zc(88) - Zc(96)}" fill="#0a0c0e"/><rect x="${Xc(2)}" y="${Zc(96)}" width="${9 * sc}" height="${Zc(88) - Zc(96)}" fill="#0a0c0e"/>`;
+  s += `<rect x="${Xc(-1)}" y="${Zc(40)}" width="${2 * sc}" height="${Zc(-12) - Zc(40)}" fill="#e0a92c" opacity=".9"/>`;
+  s += `<rect x="${Xc(-17.4)}" y="${Zc(105)}" width="${34.8 * sc}" height="${Zc(5.6) - Zc(105)}" fill="url(#vidrio)" stroke="#7f9ab3" stroke-width="1.2"/>`;
+  s += `<path d="M${Xc(-17.4)},${Zc(5.6)} H${Xc(17.4)} L${Xc(8)},${Zc(-12.4)} H${Xc(-8)} Z" fill="url(#vidrio)" stroke="#7f9ab3" stroke-width="1.2"/>`;
+  s += `<rect x="${Xc(-8)}" y="${Zc(-12.4)}" width="${16 * sc}" height="${Zc(-32) - Zc(-12.4)}" fill="url(#cilG)"/>`;
+  s += `<text x="${Xc(22)}" y="${Zc(48)}" font-size="12" fill="#1f2d3d">ranura</text><path d="M${Xc(21)},${Zc(50)} L${Xc(2)},${Zc(55)}" stroke="#1f2d3d" stroke-width="1"/>`;
+  s += `<text x="${Xc(22)}" y="${Zc(93)}" font-size="12" fill="#1f2d3d">rebose</text><path d="M${Xc(21)},${Zc(95)} L${Xc(11)},${Zc(92)}" stroke="#1f2d3d" stroke-width="1"/>`;
+  s += `<text x="${Xc(22)}" y="${Zc(-20)}" font-size="12" fill="#1f2d3d">salida</text>`;
+  s += `<text x="${Xc(-31)}" y="${Zc(40)}" font-size="11" fill="#cfd6dd" text-anchor="middle" transform="rotate(-90 ${Xc(-31)} ${Zc(40)})">electrónica</text>`;
+  s += flecha(612);
+  // 5 electrónica
+  s += tit(718, 'Electrónica', 'va en el compartimento|frontal');
+  s += `<rect x="668" y="96" width="44" height="30" rx="2" fill="url(#pcbAzul)"/><rect x="674" y="101" width="32" height="18" fill="#04080c"/><text x="678" y="114" font-size="8" fill="#cfefff">287 mL</text>`;
+  s += `<rect x="726" y="98" width="30" height="24" rx="2" fill="#1f2a1f"/><rect x="731" y="102" width="16" height="13" fill="url(#metal)"/><rect x="751" y="106" width="7" height="8" fill="#9aa3ab"/>`;
+  s += `<rect x="676" y="142" width="34" height="26" rx="2" fill="url(#pcbAzul)"/><rect x="684" y="148" width="18" height="14" rx="1" fill="#15181b"/><rect x="702" y="150" width="14" height="4" rx="2" fill="#f3f5f7"/><rect x="702" y="157" width="14" height="4" rx="2" fill="#f3f5f7"/>`;
+  s += `<rect x="726" y="140" width="44" height="30" rx="4" fill="url(#lipo)" stroke="#b0b8c0"/><rect x="726" y="140" width="10" height="30" fill="#f0c43a" opacity=".85"/><path d="M770,150 h14 M770,158 h14" stroke="#c0392b" stroke-width="2"/><path d="M770,158 h14" stroke="#222" stroke-width="2"/>`;
+  s += `<text x="718" y="190" font-size="12" fill="#4b5b6e" text-anchor="middle">OLED · XIAO</text><text x="718" y="204" font-size="12" fill="#4b5b6e" text-anchor="middle">sensor · batería</text>`;
+  s += `<rect x="676" y="216" width="84" height="8" rx="2" fill="url(#tapaF)"/><text x="718" y="242" font-size="12" fill="#4b5b6e" text-anchor="middle">tapa de la caja</text>`;
+  s += flecha(800);
+  // 6 tubo
+  s += tit(890, 'Tubo de salida', 'Ø12 mm interior|50–80 cm');
+  s += `<path d="M872,100 C872,170 880,210 930,240" stroke="#c9a65a" stroke-width="20" fill="none" opacity=".5"/><path d="M872,100 C872,170 880,210 930,240" stroke="url(#tuboG)" stroke-width="16" fill="none" opacity=".8"/><path d="M872,100 C872,170 880,210 930,240" stroke="#d99a1e" stroke-width="6" fill="none" opacity=".5"/>`;
+  document.getElementById('svgInt').innerHTML = s;
+})();
+
+// ----------------------------------------------------------- componentes ----
+(function iconos() {
+  const set = (id, s) => document.getElementById(id).innerHTML = DEFS + s;
+  set('icSensor', `<ellipse cx="75" cy="84" rx="56" ry="6" fill="#c4cfdb" opacity=".6"/>
+    <rect x="28" y="22" width="80" height="58" rx="4" fill="url(#pcbAzul)"/><circle cx="35" cy="29" r="2.5" fill="#d6dde4"/><circle cx="101" cy="73" r="2.5" fill="#d6dde4"/>
+    <rect x="44" y="32" width="44" height="38" rx="4" fill="#15181b"/><text x="66" y="55" text-anchor="middle" font-size="8" fill="#9aa3ab">MS4525</text>
+    <rect x="88" y="38" width="36" height="9" rx="4.5" fill="#f3f5f7" stroke="#c3cbd3"/><rect x="88" y="55" width="36" height="9" rx="4.5" fill="#f3f5f7" stroke="#c3cbd3"/>
+    <path d="M30,80 v8 M38,80 v8 M46,80 v8 M54,80 v8" stroke="#c9b26a" stroke-width="2"/>`);
+  set('icXiao', `<ellipse cx="75" cy="84" rx="50" ry="6" fill="#c4cfdb" opacity=".6"/>
+    <rect x="36" y="18" width="78" height="62" rx="5" fill="#1f2a1f"/><rect x="48" y="28" width="46" height="40" rx="2" fill="url(#metal)"/>
+    <text x="71" y="46" text-anchor="middle" font-size="7.5" fill="#4b5560" font-weight="700">XIAO</text><text x="71" y="56" text-anchor="middle" font-size="6.5" fill="#4b5560">ESP32-C3</text>
+    <rect x="104" y="38" width="16" height="22" rx="3" fill="#9aa3ab" stroke="#6b737b"/>
+    <g fill="#d4b660">${[0,1,2,3,4,5,6].map(i => `<circle cx="${44 + i * 10}" cy="22" r="2.2"/><circle cx="${44 + i * 10}" cy="76" r="2.2"/>`).join('')}</g>`);
+  set('icOled', `<ellipse cx="75" cy="86" rx="48" ry="6" fill="#c4cfdb" opacity=".6"/>
+    <rect x="34" y="12" width="82" height="70" rx="4" fill="url(#pcbAzul)"/><rect x="40" y="26" width="70" height="40" rx="2" fill="#04080c"/>
+    <text x="48" y="52" font-size="17" font-weight="600" fill="#9fd8ff">287</text><text x="83" y="52" font-size="9" fill="#9fd8ff">mL</text>
+    <g fill="#d4b660">${[0,1,2,3].map(i => `<circle cx="${60 + i * 10}" cy="18" r="2.2"/>`).join('')}</g>`);
+  set('icBat', `<ellipse cx="75" cy="84" rx="56" ry="6" fill="#c4cfdb" opacity=".6"/>
+    <rect x="22" y="26" width="92" height="52" rx="6" fill="url(#lipo)" stroke="#aeb7c0"/><rect x="22" y="26" width="20" height="52" rx="4" fill="#f0c43a"/>
+    <text x="72" y="50" text-anchor="middle" font-size="9" fill="#5b6570">3,7 V</text><text x="72" y="62" text-anchor="middle" font-size="9" fill="#5b6570">400 mAh</text>
+    <path d="M114,44 C126,44 126,34 138,34 M114,58 C126,58 126,48 138,48" stroke="#c0392b" stroke-width="2.6" fill="none"/><path d="M114,58 C126,58 126,48 138,48" stroke="#222" stroke-width="2.6" fill="none"/>`);
+  set('icCam', `<ellipse cx="75" cy="88" rx="40" ry="5" fill="#c4cfdb" opacity=".6"/>
+    <rect x="52" y="14" width="46" height="72" rx="3" fill="url(#cilG)"/><ellipse cx="75" cy="14" rx="23" ry="5" fill="#4f5760"/><ellipse cx="75" cy="14" rx="19" ry="3.6" fill="#15181b"/>
+    <rect x="73.5" y="34" width="3.5" height="50" fill="#0a0c0e"/><rect x="62" y="22" width="9" height="7" fill="#0a0c0e"/><rect x="80" y="22" width="9" height="7" fill="#0a0c0e"/>
+    <rect x="73" y="60" width="4" height="30" fill="#e0a92c" opacity=".9"/>`);
+})();
+
+// ----------------------------------------------------------- dimensiones ----
+(function dims() {
+  const k = 1.6, X0 = 160, Z0 = 312;
+  const X = x => X0 + x * k, Y = z => Z0 - z * k;
+  let s = DEFS;
+  s += `<path d="M${X(-84.4)},${Y(83)} V${Y(105)} H${X(-25.4)} V${Y(101)} H${X(-80.4)} V${Y(83)} Z" fill="#59626c"/>`;
+  s += `<rect x="${X(25.4)}" y="${Y(105)}" width="${13.4 * k}" height="${99.4 * k}" fill="#22262b"/>`;
+  s += `<path d="M${X(25.4)},${Y(5.6)} H${X(38.8)} L${X(35.4)},${Y(-12.4)} H${X(25.4)} Z" fill="#1d2025"/>`;
+  s += `<rect x="${X(25.4)}" y="${Y(-12.4)}" width="${10 * k}" height="${19.6 * k}" fill="#2b3036"/>`;
+  s += `<rect x="${X(-18.4)}" y="${Y(108)}" width="${57.2 * k}" height="${3 * k}" fill="#555d66"/>`;
+  s += `<rect x="${X(-25.4)}" y="${Y(105)}" width="${50.8 * k}" height="${137 * k}" rx="3" fill="url(#cuerpoF)"/>`;
+  s += `<rect x="${X(-12)}" y="${Y(88)}" width="${24 * k}" height="${13 * k}" rx="1.5" fill="#03070b"/><text x="${X(-9)}" y="${Y(78)}" font-size="11" font-weight="600" fill="#cfefff">287</text>`;
+  s += `<circle cx="${X(0)}" cy="${Y(61)}" r="5" fill="#1a1d21" stroke="#5c646c" stroke-width="1.2"/>`;
+  s += `<rect x="${X(-20.5)}" y="${Y(126)}" width="${30 * k}" height="${18 * k}" fill="url(#cilG)"/>`;
+  s += `<path d="M${X(-18)},${Y(126)} L${X(-60.5)},${Y(186)} H${X(49.5)} L${X(7)},${Y(126)} Z" fill="url(#embudoG)" stroke="#a9b8c6" stroke-width="1.2"/>`;
+  // cotas
+  const az = '#2c6db3';
+  const yA = Y(-32) + 22;
+  s += `<path d="M${X(-25.4)},${yA} H${X(38.8)} M${X(-25.4)},${yA - 5} v10 M${X(38.8)},${yA - 5} v10 M${X(-25.4)},${Y(-32) + 4} V${yA + 4} M${X(38.8)},${Y(-32) + 4} V${yA + 4}" stroke="${az}" stroke-width="1.3"/>`;
+  s += `<text x="${X(6.7)}" y="${yA + 20}" text-anchor="middle" font-size="16" font-weight="600" fill="${az}">≈ 64 mm</text>`;
+  const xB = X(38.8) + 28, xC = X(38.8) + 112;
+  s += `<path d="M${xB},${Y(108)} V${Y(-32)} M${xB - 5},${Y(108)} h10 M${xB - 5},${Y(-32)} h10" stroke="${az}" stroke-width="1.3"/>`;
+  s += `<text x="${xB + 8}" y="${Y(40)}" font-size="16" font-weight="600" fill="${az}">≈ 14 cm</text><text x="${xB + 8}" y="${Y(40) + 17}" font-size="12" fill="${az}">cuerpo</text>`;
+  s += `<path d="M${xC},${Y(186)} V${Y(-32)} M${xC - 5},${Y(186)} h10 M${xC - 5},${Y(-32)} h10" stroke="${az}" stroke-width="1.3"/>`;
+  s += `<text x="${xC + 8}" y="${Y(150)}" font-size="16" font-weight="600" fill="${az}">≈ 22 cm</text><text x="${xC + 8}" y="${Y(150) + 17}" font-size="12" fill="${az}">con</text><text x="${xC + 8}" y="${Y(150) + 31}" font-size="12" fill="${az}">embudo</text>`;
+  s += `<text x="${X(-84.4)}" y="${Y(-32) + 70}" font-size="14" fill="#4b5b6e">Fondo ≈ 62 mm · embudo Ø110 mm</text>`;
+  document.getElementById('svgDim').innerHTML = s;
+})();
+
+// ------------------------------------------------------------------- uso ----
+(function uso() {
+  const L = 'stroke="#3d5a80" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"';
+  const set = (id, s) => document.getElementById(id).innerHTML = s;
+  set('u1', `<path d="M14,36 h46 q8,0 8,8 v8 q0,8 -8,8 h-46 z" ${L}/><path d="M68,44 q4,40 40,48" ${L} stroke-dasharray="4 4"/>
+    <path d="M30,30 h58 v52 M30,30 v14" ${L}/><rect x="88" y="26" width="26" height="64" rx="3" fill="#2b3036"/><rect x="94" y="36" width="14" height="8" fill="#9fd8ff"/>
+    <path d="M90,26 l-14,-22 h50 l-14,22" ${L}/>`);
+  set('u2', `<rect x="48" y="10" width="54" height="80" rx="5" fill="#2b3036"/><rect x="55" y="20" width="40" height="22" rx="2" fill="#03070b"/>
+    <text x="75" y="35" text-anchor="middle" font-size="10" font-weight="700" fill="#9fd8ff">LISTO</text><circle cx="75" cy="60" r="7" fill="#1a1d21" stroke="#9aa3ab" stroke-width="1.5"/>
+    <path d="M112,58 q10,-10 0,-20 M118,64 q18,-16 0,-32" ${L}/><path d="M86,78 l-6,-14 l14,4" ${L}/>`);
+  set('u3', `<path d="M28,30 h94 l-36,40 v20 h-22 v-20 z" ${L} fill="#eef3f7"/><ellipse cx="75" cy="30" rx="47" ry="7" ${L}/>
+    <path d="M75,0 q4,14 0,30" stroke="#e0a92c" stroke-width="5" fill="none" stroke-linecap="round"/>`);
+  set('u4', `<rect x="10" y="14" width="86" height="60" rx="6" fill="#1f2328"/><rect x="16" y="20" width="74" height="48" rx="2" fill="#03070b"/>
+    <text x="22" y="38" font-size="13" font-weight="700" fill="#9fd8ff">287 mL</text><path d="M22,62 q12,-24 26,-16 t36,14" stroke="#9fd8ff" stroke-width="1.5" fill="none"/>
+    <path d="M118,22 q-8,14 0,18 q8,-4 0,-18 z M132,46 q-6,10 0,13 q6,-3 0,-13 z M116,62 q-6,10 0,13 q6,-3 0,-13 z" fill="#8cc4ec" stroke="#3d5a80" stroke-width="1.5"/>`);
+})();
+document.documentElement.dataset.alto = document.getElementById('page').scrollHeight;
+</script>
+</body>
+</html>
